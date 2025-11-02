@@ -23,6 +23,9 @@ import { PaymentsModule } from './app/modules/payments/payments.module';
 import { AssignmentsModule } from './app/modules/assignments/assignments.module';
 import { SubmissionsModule } from './app/modules/submissions/submissions.module';
 import { NotificationsModule } from './app/modules/notifications/notifications.module';
+import { FeedbacksModule } from './app/modules/feedbacks/feedbacks.module';
+import { SupportsModule } from './app/modules/supports/supports.module';
+import { ProgressesModule } from './app/modules/progresses/progresses.module';
 
 @Module({
   imports: [
@@ -48,6 +51,9 @@ import { NotificationsModule } from './app/modules/notifications/notifications.m
     AssignmentsModule,
     SubmissionsModule,
     NotificationsModule,
+    FeedbacksModule,
+    SupportsModule,
+    ProgressesModule,
   ],
   controllers: [AppController],
   providers: [AppService],
