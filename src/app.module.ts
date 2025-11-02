@@ -15,6 +15,8 @@ import { HistoryInvitationsModule } from './app/modules/history-invitations/hist
 import { FeatureFlagsModule } from './app/modules/feature-flags/feature-flags.module';
 import { BadgesModule } from './app/modules/badges/badges.module';
 import { UserBadgesModule } from './app/modules/user-badges/user-badges.module';
+import { LiteraturesModule } from './app/modules/literatures/literatures.module';
+import { SongsModule } from './app/modules/songs/songs.module';
 
 @Module({
   imports: [
@@ -32,6 +34,8 @@ import { UserBadgesModule } from './app/modules/user-badges/user-badges.module';
     FeatureFlagsModule,
     BadgesModule,
     UserBadgesModule,
+    LiteraturesModule,
+    SongsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
