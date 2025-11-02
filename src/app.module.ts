@@ -20,6 +20,8 @@ import { CompetitionsModule } from './app/modules/competitions/competitions.modu
 import { PackagesModule } from './app/modules/packages/packages.module';
 import { SubscriptionsModule } from './app/modules/subscriptions/subscriptions.module';
 import { PaymentsModule } from './app/modules/payments/payments.module';
+import { AssignmentsModule } from './app/modules/assignments/assignments.module';
+import { SubmissionsModule } from './app/modules/submissions/submissions.module';
 
 @Module({
   imports: [
@@ -42,6 +44,8 @@ import { PaymentsModule } from './app/modules/payments/payments.module';
     PackagesModule,
     SubscriptionsModule,
     PaymentsModule,
+    AssignmentsModule,
+    SubmissionsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
