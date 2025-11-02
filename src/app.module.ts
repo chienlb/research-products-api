@@ -13,6 +13,8 @@ import { LessonsModule } from './app/modules/lessons/lessons.module';
 import { InvitationCodesModule } from './app/modules/invitation-codes/invitation-codes.module';
 import { HistoryInvitationsModule } from './app/modules/history-invitations/history-invitations.module';
 import { FeatureFlagsModule } from './app/modules/feature-flags/feature-flags.module';
+import { BadgesModule } from './app/modules/badges/badges.module';
+import { UserBadgesModule } from './app/modules/user-badges/user-badges.module';
 
 @Module({
   imports: [
@@ -28,6 +30,8 @@ import { FeatureFlagsModule } from './app/modules/feature-flags/feature-flags.mo
     InvitationCodesModule,
     HistoryInvitationsModule,
     FeatureFlagsModule,
+    BadgesModule,
+    UserBadgesModule,
   ],
   controllers: [AppController],
   providers: [AppService],
