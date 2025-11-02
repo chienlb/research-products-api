@@ -41,17 +41,35 @@ export enum UserLanguage {
   EN = 'en',
 }
 
+export enum UserTheme {
+  LIGHT = 'light',
+  DARK = 'dark',
+}
+
+export enum UserFont {
+  DEFAULT = 'default',
+  SERIF = 'serif',
+  SANS_SERIF = 'sans-serif',
+}
+
+export enum UserCurrency {
+  VND = 'VND',
+  USD = 'USD',
+  EUR = 'EUR',
+  JPY = 'JPY',
+}
+
 export interface IUser {
   fullname: string; // Họ và tên đầy đủ của người dùng
   username: string; // Tên đăng nhập duy nhất của người dùng
-  email: string; // Địa chỉ email của người dùng
+  email: string; // Địa chỉ email của người dùng ( Nếu là học sinh, có thể là email phụ huynh )
   password: string; // Mật khẩu đã được mã hóa của người dùng
   birthDate?: Date; // Ngày sinh của người dùng
   role: UserRole; // Vai trò của người dùng trong hệ thống
   slug: string; // Đường dẫn thân thiện với SEO cho người dùng
   avatar?: string; // URL ảnh đại diện của người dùng
   cover?: string; // URL ảnh bìa của người dùng
-  phone?: string; // Số điện thoại của người dùng
+  phone?: string; // Số điện thoại của người dùng ( Nếu là học sinh, có thể là số điện thoại phụ huynh )
   gender?: UserGender; // Giới tính của người dùng
   language?: UserLanguage; // Ngôn ngữ của người dùng
   province?: string; // Tỉnh/Thành phố của người dùng
@@ -68,6 +86,11 @@ export interface IUser {
   exp?: number; // Số kinh nghiệm của người dùng
   streakDays?: number; // Số ngày liên tiếp hoạt động của người dùng
   progressLevel?: number; // Cấp độ tiến bộ của người dùng
+  theme?: UserTheme; // Chủ đề giao diện của người dùng
+  font?: UserFont; // Phông chữ giao diện của người dùng
+  currency?: string; // Loại tiền tệ ưa thích của người dùng
+  enableNotifications?: boolean; // Trạng thái kích hoạt thông báo trên website
+  enableNotificationEmails?: boolean; // Trạng thái nhận email thông báo từ hệ thống
   status: UserStatus; // Trạng thái tài khoản của người dùng
   lastLoginAt?: Date; // Thời gian đăng nhập gần nhất
   createdBy?: Types.ObjectId; // Người tạo tài khoản
@@ -166,6 +189,21 @@ export class User implements IUser {
 
   @Prop({ default: 0 })
   progressLevel?: number;
+
+  @Prop({ enum: UserTheme, default: UserTheme.LIGHT })
+  theme?: UserTheme;
+
+  @Prop({ enum: UserFont, default: UserFont.DEFAULT })
+  font?: UserFont;
+
+  @Prop({ enum: UserCurrency, default: UserCurrency.VND })
+  currency?: UserCurrency;
+
+  @Prop({ default: false })
+  enableNotifications?: boolean;
+
+  @Prop({ default: false })
+  enableNotificationEmails?: boolean;
 
   @Prop({ enum: UserStatus, default: UserStatus.ACTIVE })
   status: UserStatus;
