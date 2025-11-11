@@ -1,6 +1,6 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import { Logger, ValidationPipe } from '@nestjs/common';
+import { Logger, ValidationPipe, RequestMethod } from '@nestjs/common';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import compression from 'compression';
@@ -76,6 +76,7 @@ async function bootstrap(): Promise<void> {
   app.use(
     urlencoded({ limit: env.BODY_LIMIT_URLENCODED ?? '1mb', extended: true }),
   );
+
   // eslint-disable-next-line @typescript-eslint/no-unsafe-call
   app.use(cookieParser());
 
@@ -83,7 +84,14 @@ async function bootstrap(): Promise<void> {
 
   if (env.API_PREFIX) {
     const cleanPrefix = String(env.API_PREFIX).replace(/^\/+|\/+$/g, '');
-    if (cleanPrefix) app.setGlobalPrefix(cleanPrefix);
+    if (cleanPrefix) {
+      app.setGlobalPrefix(cleanPrefix, {
+        exclude: [
+          { path: '/', method: RequestMethod.ALL },
+          { path: '/hello', method: RequestMethod.ALL },
+        ],
+      });
+    }
   }
 
   if (String(env.TRUST_PROXY ?? 'true') === 'true') {
