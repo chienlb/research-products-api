@@ -107,7 +107,7 @@ async function bootstrap(): Promise<void> {
 
   app.useGlobalFilters(new HttpExceptionFilter());
 
-  logger.log(`🚀 App running on http://0.0.0.0:${port}`);
+  logger.log(`🚀 App running on http://localhost:${port}`);
 
   const gracefulShutdown = async (reason: string, code = 0): Promise<void> => {
     try {
