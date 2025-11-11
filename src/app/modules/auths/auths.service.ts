@@ -22,9 +22,13 @@ import { HistoryInvitationStatus } from '../history-invitations/dto/create-histo
 import {
   InvitationCode,
   InvitationCodeDocument,
+  InvitationCodeType,
 } from '../invitation-codes/schema/invitation-code.schema';
 import { LoginAuthDto } from './dto/login-auth.dto';
 import * as jwt from 'jsonwebtoken';
+import { TokensService } from '../tokens/tokens.service';
+
+
 @Injectable()
 export class AuthsService {
   private readonly logger = new Logger(AuthsService.name);
@@ -36,12 +40,14 @@ export class AuthsService {
     @InjectModel(InvitationCode.name)
     private readonly inviteCodeModel: Model<InvitationCodeDocument>,
 
+    private readonly TokensService: TokensService,
+
     private readonly invitationCodesService: InvitationCodesService,
     private readonly historyInvitationsService: HistoryInvitationsService,
-  ) {}
-
+  ) { }
   async register(registerAuthDto: RegisterAuthDto): Promise<Partial<User>> {
     try {
+      // 1. Kiểm tra user trùng
       const existingUser = await this.userModel.findOne({
         $or: [
           { email: registerAuthDto.email },
@@ -52,19 +58,20 @@ export class AuthsService {
         throw new ConflictException('Email or username already exists.');
       }
 
+      // 2. Kiểm tra logic role
       if (registerAuthDto.role === UserRole.STUDENT) {
         const missing: string[] = [];
-
         if (!registerAuthDto.inviteCode) {
           if (!registerAuthDto.school) missing.push('school');
           if (!registerAuthDto.className) missing.push('className');
           if (!registerAuthDto.teacher) missing.push('teacher');
           if (!registerAuthDto.parent) missing.push('parent');
         }
-
         if (missing.length > 0) {
           throw new BadRequestException(
-            `Students must provide the following information: ${missing.join(', ')} or enter an invitation code.`,
+            `Students must provide the following information: ${missing.join(
+              ', ',
+            )} or enter an invitation code.`,
           );
         }
       } else if (registerAuthDto.role === UserRole.TEACHER) {
@@ -75,17 +82,19 @@ export class AuthsService {
         }
       }
 
+      // 3. Xử lý mã mời học sinh nhập (nếu có)
       let invitedBy: string | null = null;
 
-      if (registerAuthDto.inviteCode) {
+      if (
+        registerAuthDto.inviteCode &&
+        registerAuthDto.role === UserRole.STUDENT
+      ) {
         const inviter = await this.inviteCodeModel.findOne({
           code: registerAuthDto.inviteCode,
         });
 
         if (!inviter) {
-          this.logger.warn(
-            `Invalid invitation code: ${registerAuthDto.inviteCode}`,
-          );
+          this.logger.warn(`Invalid invitation code: ${registerAuthDto.inviteCode}`);
           throw new NotFoundException(
             'Invalid invitation code or inviter does not exist.',
           );
@@ -122,9 +131,11 @@ export class AuthsService {
         );
       }
 
+      // 4. Hash password
       const salt = await bcrypt.genSalt(10);
       const hashedPassword = await bcrypt.hash(registerAuthDto.password, salt);
 
+      // 5. Tạo user mới (chưa lưu mã mời)
       const newUser = new this.userModel({
         ...registerAuthDto,
         password: hashedPassword,
@@ -134,28 +145,39 @@ export class AuthsService {
         invitedBy: invitedBy ? invitedBy : undefined,
       });
 
-      const invitationCodesData: CreateInvitationCodeDto = {
-        createdBy: newUser._id.toString(),
-        event: 'Invitation code for student registration',
-        description: `Invitation code created by ${registerAuthDto.username} to invite other students.`,
-        totalUses: 100,
-        usesLeft: 100,
-        startedAt: new Date().toISOString(),
-      };
+      // 6. Lưu user trước
+      const savedUser = await newUser.save();
+      this.logger.log(`User ${savedUser.username} registered successfully.`);
 
-      const { data: invitationCode } =
-        await this.invitationCodesService.createInvitationCode(
-          invitationCodesData,
-        );
+      // 7. Tạo mã mời (chỉ cho giáo viên hoặc quản trị)
+      if (
+        [UserRole.PARENT, UserRole.TEACHER, UserRole.ADMIN].includes(savedUser.role as UserRole)
+      ) {
+        try {
+          const invitationCodesData: CreateInvitationCodeDto = {
+            createdBy: savedUser._id.toString(),
+            event: 'Invitation code for student registration',
+            description: `Invitation code created by ${savedUser.username} to invite other students.`,
+            type: InvitationCodeType.GROUP_JOIN,
+            totalUses: 100,
+            usesLeft: 100,
+            startedAt: new Date().toISOString(),
+          };
 
-      this.logger.log(
-        `Invitation code created for user ${registerAuthDto.username}: ${invitationCode.code}`,
-      );
+          const { data: invitationCode } =
+            await this.invitationCodesService.createInvitationCode(
+              invitationCodesData,
+            );
 
-      const saved = await newUser.save();
-      const result = saved.toObject();
-
-      return result;
+          this.logger.log(
+            `Invitation code created for ${savedUser.username}: ${invitationCode.code}`,
+          );
+        } catch (err) {
+          this.logger.error('Error while creating invitation code:', err);
+          // Không throw — vì không muốn làm fail luôn quá trình đăng ký
+        }
+      }
+      return savedUser.toObject();
     } catch (error) {
       this.logger.error(
         `Error registering user ${registerAuthDto.username}:`,
@@ -173,6 +195,7 @@ export class AuthsService {
       throw new BadRequestException('Registration failed. Please try again.');
     }
   }
+
 
   async login(
     loginAuthDto: LoginAuthDto,
@@ -209,11 +232,24 @@ export class AuthsService {
         { expiresIn: '7d' },
       );
 
-      user.tokenVerify = accessToken;
       await user.save();
 
+      const userObj = user.toObject ? user.toObject() : { ...user };
+      if ('password' in userObj) {
+        // To satisfy the linter and avoid assigning undefined to a string, remove password key entirely
+        delete (userObj as any).password;
+      }
+
+      await this.TokensService.createToken({
+        userId: user._id.toString(),
+        token: accessToken,
+        deviceId: loginAuthDto.deviceId,
+        typeDevice: loginAuthDto.typeDevice,
+        typeLogin: loginAuthDto.typeLogin,
+      });
+
       return {
-        ...user.toObject(),
+        ...userObj,
         accessToken,
         refreshToken,
       };

@@ -1,5 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Types, HydratedDocument } from 'mongoose';
+import { generateSlug } from '../../../common/utils/slug.util';
 
 export type UserDocument = HydratedDocument<User>;
 
@@ -64,13 +65,13 @@ export interface IUser {
   username: string; // Tên đăng nhập duy nhất của người dùng
   email: string; // Địa chỉ email của người dùng ( Nếu là học sinh, có thể là email phụ huynh )
   password: string; // Mật khẩu đã được mã hóa của người dùng
-  birthDate?: Date; // Ngày sinh của người dùng
+  birthDate: Date; // Ngày sinh của người dùng
   role: UserRole; // Vai trò của người dùng trong hệ thống
   slug: string; // Đường dẫn thân thiện với SEO cho người dùng
   avatar?: string; // URL ảnh đại diện của người dùng
   cover?: string; // URL ảnh bìa của người dùng
-  phone?: string; // Số điện thoại của người dùng ( Nếu là học sinh, có thể là số điện thoại phụ huynh )
-  gender?: UserGender; // Giới tính của người dùng
+  phone: string; // Số điện thoại của người dùng ( Nếu là học sinh, có thể là số điện thoại phụ huynh )
+  gender: UserGender; // Giới tính của người dùng
   language?: UserLanguage; // Ngôn ngữ của người dùng
   province?: string; // Tỉnh/Thành phố của người dùng
   district?: Types.ObjectId; // Quận/Huyện của người dùng
@@ -81,10 +82,6 @@ export interface IUser {
   typeAccount: UserTypeAccount; // Loại hình tài khoản của người dùng
   isVerify: boolean; // Trạng thái xác thực của người dùng
   tokenVerify: string; // Mã token dùng để xác thực tài khoản
-  refCode?: string; // Mã giới thiệu của người dùng
-  invitedBy?: Types.ObjectId; // Người mời của người dùng
-  invitedAt?: Date; // Ngày người dùng được mời
-  totalInvites?: number; // Tổng số người dùng đã mời
   exp?: number; // Số kinh nghiệm của người dùng
   streakDays?: number; // Số ngày liên tiếp hoạt động của người dùng
   progressLevel?: number; // Cấp độ tiến bộ của người dùng
@@ -127,7 +124,7 @@ export class User implements IUser {
   password: string;
 
   @Prop()
-  birthDate?: Date;
+  birthDate: Date;
 
   @Prop({ enum: UserRole, default: UserRole.STUDENT })
   role: UserRole;
@@ -142,10 +139,10 @@ export class User implements IUser {
   cover?: string;
 
   @Prop()
-  phone?: string;
+  phone: string;
 
   @Prop({ enum: UserGender, default: UserGender.OTHER })
-  gender?: UserGender;
+  gender: UserGender;
 
   @Prop({ enum: UserLanguage, default: UserLanguage.VI })
   language?: UserLanguage;
@@ -221,3 +218,20 @@ export class User implements IUser {
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);
+
+UserSchema.pre('validate', async function (next) {
+  if (this.isModified('fullname') || this.isModified('username') || !this.slug) {
+    const baseSlug = generateSlug(this.fullname || this.username);
+    let slug = baseSlug;
+    let count = 1;
+
+    // Dùng this.constructor thay vì this.model() để tránh lỗi context
+    const UserModel = this.constructor as any;
+    while (await UserModel.exists({ slug })) {
+      slug = `${baseSlug}-${count++}`;
+    }
+
+    this.slug = slug;
+  }
+  next();
+});

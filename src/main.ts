@@ -10,6 +10,7 @@ import type { Express } from 'express';
 import { envSchema } from './app/configs/env/env.config';
 import { CorsOptions } from '@nestjs/common/interfaces/external/cors-options.interface';
 import { HttpExceptionFilter } from './app/common/filters/http-exception.filter';
+import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 
 async function bootstrap(): Promise<void> {
   const logger = new Logger('Bootstrap');
@@ -108,6 +109,18 @@ async function bootstrap(): Promise<void> {
   );
 
   app.enableShutdownHooks();
+
+  const config = new DocumentBuilder()
+    .setTitle('API Documentation')
+    .setDescription('API documentation for the application')
+    .setVersion('1.0')
+    .addTag('auth')
+    .build();
+
+  const document = SwaggerModule.createDocument(app, config);
+  SwaggerModule.setup('docs', app, document, {
+    customSiteTitle: 'API Documentation',
+  });
 
   const port = Number(process.env.PORT) || 3000;
 
