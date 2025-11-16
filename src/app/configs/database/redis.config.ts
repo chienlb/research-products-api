@@ -16,6 +16,7 @@ const logger = new Logger('Redis');
         const redisClient: RedisClientType = createClient({
           url: env.REDIS_URL,
           socket: {
+            connectTimeout: 5000, // Fail after 5 seconds
             reconnectStrategy: (retries) => {
               if (retries > 10) {
                 logger.error('Too many Redis reconnection attempts, stopping.');
@@ -39,11 +40,26 @@ const logger = new Logger('Redis');
         );
 
         try {
-          await redisClient.connect();
+          // Add timeout to connection attempt
+          const connectPromise = redisClient.connect();
+          const timeoutPromise = new Promise<void>((_, reject) => {
+            setTimeout(() => {
+              reject(new Error('Redis connection timeout after 10 seconds'));
+            }, 10000);
+          });
+
+          await Promise.race([connectPromise, timeoutPromise]);
           logger.log('Successfully connected to Redis.');
         } catch (err) {
           const message = err instanceof Error ? err.message : String(err);
           logger.error(`Failed to connect to Redis: ${message}`);
+          // Close the client if connection failed
+          try {
+            await redisClient.quit();
+          } catch {
+            // Ignore errors during cleanup
+          }
+          throw new Error(`Redis connection failed: ${message}`);
         }
 
         return redisClient;
