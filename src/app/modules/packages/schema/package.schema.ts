@@ -63,4 +63,3 @@ export class Package implements IPackage {
 }
 
 export const PackageSchema = SchemaFactory.createForClass(Package);
-PackageSchema.index({ code: 1 }, { unique: true });
