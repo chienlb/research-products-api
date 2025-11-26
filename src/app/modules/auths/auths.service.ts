@@ -66,157 +66,120 @@ export class AuthsService {
   ) { }
 
   async register(registerAuthDto: RegisterAuthDto): Promise<Partial<User>> {
-    if (this.connection.readyState !== 1) {
-      throw new BadRequestException('Database not ready.');
+    // 1. Check duplicate
+    const existingUser = await this.userModel.findOne({
+      $or: [
+        { email: registerAuthDto.email },
+        { username: registerAuthDto.username },
+      ],
+    });
+
+    if (existingUser) {
+      throw new ConflictException('Email or username already exists.');
     }
 
-    const session = await this.connection.startSession();
-    session.startTransaction();
+    // 2. Validate logic
+    if (registerAuthDto.role === UserRole.STUDENT) {
+      const missing: string[] = [];
 
-    let savedUser!: UserDocument;
-    let createInvitePayload: CreateInvitationCodeDto | null = null;
-
-    try {
-      // 1. Check duplicate
-      const existingUser = await this.userModel
-        .findOne({
-          $or: [
-            { email: registerAuthDto.email },
-            { username: registerAuthDto.username },
-          ],
-        })
-        .session(session);
-
-      if (existingUser) {
-        throw new ConflictException('Email or username already exists.');
+      if (!registerAuthDto.inviteCode) {
+        if (!registerAuthDto.school) missing.push('school');
+        if (!registerAuthDto.className) missing.push('className');
+        if (!registerAuthDto.teacher) missing.push('teacher');
+        if (!registerAuthDto.parent) missing.push('parent');
       }
 
-      // 2. Validate logic
-      if (registerAuthDto.role === UserRole.STUDENT) {
-        const missing = [];
-
-        if (!registerAuthDto.inviteCode) {
-          if (!registerAuthDto.school) (missing as string[]).push('school');
-          if (!registerAuthDto.className) (missing as string[]).push('className');
-          if (!registerAuthDto.teacher) (missing as string[]).push('teacher');
-          if (!registerAuthDto.parent) (missing as string[]).push('parent');
-        }
-
-
-        if (missing.length) {
-          throw new BadRequestException(
-            `Students must provide: ${missing.join(', ')} or enter an invitation code.`,
-          );
-        }
-      }
-
-      if (registerAuthDto.role === UserRole.TEACHER) {
-        if (!registerAuthDto.school) {
-          throw new BadRequestException('Teachers must select their school.');
-        }
-      }
-
-      // 3. Handle invite code (student only)
-      let invitedBy: string | null = null;
-
-      if (registerAuthDto.inviteCode && registerAuthDto.role === UserRole.STUDENT) {
-        const inviter = await this.inviteCodeModel
-          .findOne({ code: registerAuthDto.inviteCode })
-          .session(session);
-
-        if (!inviter) throw new NotFoundException('Invalid invite code.');
-
-        const inviterUser = await this.userModel.findById(inviter.createdBy).session(session);
-        if (!inviterUser) throw new NotFoundException('Inviter does not exist.');
-        if (inviterUser.role === UserRole.STUDENT)
-          throw new BadRequestException('Students cannot invite.');
-
-        invitedBy = inviter._id.toString();
-
-        await this.historyInvitationsService.createHistoryInvitation(
-          {
-            userId: inviterUser._id.toString(),
-            code: inviter.code,
-            invitedAt: new Date().toISOString(),
-            status: HistoryInvitationStatus.ACCEPTED,
-          },
-          session,
+      if (missing.length) {
+        throw new BadRequestException(
+          `Students must provide: ${missing.join(', ')} or enter an invitation code.`,
         );
       }
+    }
 
-      // 4. Hash password
-      const hashedPassword = await bcrypt.hash(registerAuthDto.password, 10);
+    if (registerAuthDto.role === UserRole.TEACHER) {
+      if (!registerAuthDto.school) {
+        throw new BadRequestException('Teachers must select their school.');
+      }
+    }
 
-      // 5. Create user
-      const newUser = new this.userModel({
-        ...registerAuthDto,
-        password: hashedPassword,
-        status: UserStatus.ACTIVE,
-        isVerify: false,
-        invitedBy: invitedBy || undefined,
+    // 3. Handle invite code
+    let invitedBy: string | null = null;
+
+    if (registerAuthDto.inviteCode && registerAuthDto.role === UserRole.STUDENT) {
+      const inviter = await this.inviteCodeModel.findOne({
+        code: registerAuthDto.inviteCode,
       });
 
-      savedUser = await newUser.save({ session });
+      if (!inviter) throw new NotFoundException('Invalid invite code.');
 
-      // Prepare auto invite code creation
-      if (
-        [UserRole.PARENT, UserRole.TEACHER, UserRole.ADMIN].includes(
-          savedUser.role as UserRole,
-        )
-      ) {
-        createInvitePayload = {
-          createdBy: savedUser._id.toString(),
-          event: 'Invitation code for student registration',
-          description: `Invitation code created by ${savedUser.username}`,
-          type: InvitationCodeType.GROUP_JOIN,
-          totalUses: 0,
-          usesLeft: 100,
-          startedAt: new Date().toISOString(),
-        };
-      }
+      const inviterUser = await this.userModel.findById(inviter.createdBy);
+      if (!inviterUser) throw new NotFoundException('Inviter does not exist.');
+      if (inviterUser.role === UserRole.STUDENT)
+        throw new BadRequestException('Students cannot invite.');
 
-      // 6. Email verify code
-      savedUser.codeVerify = randomUUID().substring(0, 6);
-      await savedUser.save({ session });
+      invitedBy = inviter._id.toString();
 
-      // Commit transaction
-      await session.commitTransaction();
-      session.endSession();
-
-      // 7. Create invitation code AFTER COMMIT (NO SESSION)
-      if (createInvitePayload) {
-        const result = await this.invitationCodesService.createInvitationCode(createInvitePayload)
-        if (!result.data) {
-          throw new BadRequestException('Failed to create invitation code.');
-        }
-      }
-
-      // 8. Send verify email
-      sendEmail(
-        savedUser.email,
-        'Mã xác minh tài khoản EnglishOne',
-        'account-verification-email',
-        {
-          brandName: 'EnglishOne',
-          userName: savedUser.username,
-          verificationCode: savedUser.codeVerify,
-          userEmail: savedUser.email,
-          supportEmail: 'support@englishone.com',
-          year: new Date().getFullYear(),
-        },
-      ).catch((e) => this.logger.error('Email send error:', e));
-
-      const obj = savedUser.toObject();
-      delete (obj as any).password;
-
-      return obj;
-    } catch (error) {
-      await session.abortTransaction();
-      session.endSession();
-      this.logger.error('Registration failed:', error);
-      throw error;
+      await this.historyInvitationsService.createHistoryInvitation({
+        userId: inviterUser._id.toString(),
+        code: inviter.code,
+        invitedAt: new Date().toISOString(),
+        status: HistoryInvitationStatus.ACCEPTED,
+      });
     }
+
+    // 4. Hash password
+    const hashedPassword = await bcrypt.hash(registerAuthDto.password, 10);
+
+    // 5. Create user
+    const savedUser = await this.userModel.create({
+      ...registerAuthDto,
+      password: hashedPassword,
+      status: UserStatus.ACTIVE,
+      isVerify: false,
+      invitedBy: invitedBy || undefined,
+    });
+
+    // 6. Create invitation code automatically
+    if (
+      [UserRole.PARENT, UserRole.TEACHER, UserRole.ADMIN].includes(
+        savedUser.role as UserRole,
+      )
+    ) {
+      await this.invitationCodesService.createInvitationCode({
+        createdBy: savedUser._id.toString(),
+        event: 'Invitation code for student registration',
+        description: `Invitation code created by ${savedUser.username}`,
+        type: InvitationCodeType.GROUP_JOIN,
+        totalUses: 0,
+        usesLeft: 100,
+        startedAt: new Date().toISOString(),
+      });
+    }
+
+    // 7. Email verify code
+    savedUser.codeVerify = randomUUID().substring(0, 6);
+    await savedUser.save();
+
+    sendEmail(
+      savedUser.email,
+      'Mã xác minh tài khoản EnglishOne',
+      'account-verification-email',
+      {
+        brandName: 'EnglishOne',
+        userName: savedUser.username,
+        verificationCode: savedUser.codeVerify,
+        userEmail: savedUser.email,
+        supportEmail: 'support@englishone.com',
+        year: new Date().getFullYear(),
+      },
+    ).catch((e) => this.logger.error('Email send error:', e));
+
+    const obj = savedUser.toObject();
+    delete (obj as any).password;
+
+    return obj;
   }
+
   // ============================================================
   // LOGIN
   // ============================================================
