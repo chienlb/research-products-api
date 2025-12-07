@@ -16,5 +16,6 @@ import { PackagesModule } from '../packages/packages.module';
   ],
   controllers: [SubscriptionsController],
   providers: [SubscriptionsService],
+  exports: [SubscriptionsService, MongooseModule],
 })
 export class SubscriptionsModule { }

@@ -4,8 +4,8 @@ import { Model, Types } from 'mongoose';
 import { Group, GroupDocument, GroupType, GroupVisibility } from './schema/group.schema';
 import { CreateGroupDto } from './dto/create-group.dto';
 import { UsersService } from '../users/users.service';
-import { UserAccountPackage } from '../users/schema/user.schema';
 import { UpdateGroupDto } from './dto/update-group.dto';
+import { PackageType } from '../packages/schema/package.schema';
 
 @Injectable()
 export class GroupsService {
@@ -34,16 +34,16 @@ export class GroupsService {
         createGroupDto.members = members.map((member) => member.toString());
       }
       const typeOwner = user.accountPackage;
-      if (typeOwner === UserAccountPackage.FREE) {
+      if (typeOwner === PackageType.FREE) {
         createGroupDto.maxMembers = 10;
       }
-      if (typeOwner === UserAccountPackage.STANDARD) {
+      if (typeOwner === PackageType.STANDARD) {
         createGroupDto.maxMembers = 20;
       }
-      if (typeOwner === UserAccountPackage.PREMIUM) {
+      if (typeOwner === PackageType.PREMIUM) {
         createGroupDto.maxMembers = 50;
       }
-      if (typeOwner === UserAccountPackage.VIP) {
+      if (typeOwner === PackageType.VIP) {
         createGroupDto.maxMembers = 100;
       }
       const newGroup = new this.groupRepository({

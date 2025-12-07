@@ -9,7 +9,6 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import {
   User,
-  UserAccountPackage,
   UserDocument,
   UserRole,
   UserTypeAccount,
@@ -19,6 +18,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import * as bcrypt from 'bcrypt';
 import { InvitationCodeType } from '../invitation-codes/schema/invitation-code.schema';
 import { InvitationCodesService } from '../invitation-codes/invitation-codes.service';
+import { PackageType } from '../packages/schema/package.schema';
 
 @Injectable()
 export class UsersService {
@@ -49,7 +49,7 @@ export class UsersService {
 
       if (
         createUserDto.role !== UserRole.STUDENT &&
-        newUser.accountPackage !== UserAccountPackage.FREE
+        newUser.accountPackage !== PackageType.FREE
       ) {
         const invitationCode =
           await this.invitationCodesService.createInvitationCode(

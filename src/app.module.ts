@@ -35,6 +35,7 @@ import { ConfigModule } from '@nestjs/config';
 import { AuthsModule } from './app/modules/auths/auths.module';
 import { MongoDBModule } from './app/configs/database/mongodb.config';
 import { CloudflareModule } from './app/modules/cloudflare/cloudflare.module';
+import { PurchasesModule } from './app/modules/purchases/purchases.module';
 
 @Module({
   imports: [
@@ -77,6 +78,8 @@ import { CloudflareModule } from './app/modules/cloudflare/cloudflare.module';
     AuthsModule,
 
     CloudflareModule,
+
+    PurchasesModule,
   ],
   controllers: [AppController],
   providers: [AppService],
