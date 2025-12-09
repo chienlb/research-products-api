@@ -13,13 +13,15 @@ import { RegisterAuthDto } from './dto/register-auth.dto';
 import { ApiTags, ApiOperation, ApiBody, ApiResponse } from '@nestjs/swagger';
 import { LoginAuthDto } from './dto/login-auth.dto';
 import { ok } from 'src/app/common/response/api-response';
-import {
-  LogoutAllDevicesAuthDto,
-  LogoutDeviceAuthDto,
-  LogoutNotDeviceAuthDto,
-} from './dto/logout-auth.dto';
+import { LogoutDeviceAuthDto } from './dto/logout-auth.dto';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiBearerAuth } from '@nestjs/swagger';
+import { JwtStrategy } from './strategies/jwt.strategy';
+import { ChangePasswordDto } from './dto/change-password.dto';
+import { VerifyEmailDto } from './dto/verify-email.dto';
+import { ResendVerificationEmailDto } from './dto/resend-verification-email.dto';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
 
 @ApiTags('Auths')
 @ApiBearerAuth()
@@ -107,8 +109,8 @@ export class AuthsController {
   })
   @ApiResponse({ status: 200, description: 'Email verified successfully' })
   @ApiResponse({ status: 400, description: 'Bad request' })
-  async verifyEmail(@Body() codeVerify: string) {
-    const result = await this.authsService.verifyEmail(codeVerify);
+  async verifyEmail(@Body() verifyEmailDto: VerifyEmailDto) {
+    const result = await this.authsService.verifyEmail(verifyEmailDto);
     return ok(result, 'Email verified successfully', 200);
   }
 
@@ -131,8 +133,8 @@ export class AuthsController {
     description: 'Verification email resent successfully',
   })
   @ApiResponse({ status: 400, description: 'Bad request' })
-  async resendVerificationEmail(@Body() email: string) {
-    const result = await this.authsService.resendVerificationEmail(email);
+  async resendVerificationEmail(@Body() resendVerificationEmailDto: ResendVerificationEmailDto) {
+    const result = await this.authsService.resendVerificationEmail(resendVerificationEmailDto);
     return ok(result, 'Verification email resent successfully', 200);
   }
 
@@ -155,8 +157,8 @@ export class AuthsController {
     description: 'Password reset email sent successfully',
   })
   @ApiResponse({ status: 400, description: 'Bad request' })
-  async forgotPassword(@Body() email: string) {
-    const result = await this.authsService.forgotPassword(email);
+  async forgotPassword(@Body() forgotPasswordDto: ForgotPasswordDto) {
+    const result = await this.authsService.forgotPassword(forgotPasswordDto);
     return ok(result, 'Password reset email sent successfully', 200);
   }
 
@@ -177,8 +179,8 @@ export class AuthsController {
   })
   @ApiResponse({ status: 200, description: 'Password reset successfully' })
   @ApiResponse({ status: 400, description: 'Bad request' })
-  async resetPassword(@Body() codeVerify: string, @Body() password: string) {
-    const result = await this.authsService.resetPassword(codeVerify, password);
+  async resetPassword(@Body() resetPasswordDto: ResetPasswordDto) {
+    const result = await this.authsService.resetPassword(resetPasswordDto);
     return ok(result, 'Password reset successfully', 200);
   }
 
@@ -191,9 +193,8 @@ export class AuthsController {
       normal: {
         summary: 'Example of a normal user',
         value: {
-          email: 'nguyenvana@example.com',
-          password: '123456',
-          codeVerify: '123456',
+          oldPassword: '123456',
+          newPassword: '123456',
         },
       },
     },
@@ -201,44 +202,35 @@ export class AuthsController {
   @ApiResponse({ status: 200, description: 'Password changed successfully' })
   @ApiResponse({ status: 400, description: 'Bad request' })
   async changePassword(
-    @Body() email: string,
-    @Body() password: string,
-    @Body() codeVerify: string,
+    @Req() req: Request,
+    @Body() changePasswordDto: ChangePasswordDto,
   ) {
-    const result = await this.authsService.changePassword(
-      email,
-      password,
-      codeVerify,
-    );
+    const userId = (req as any).user.userId;
+    const result = await this.authsService.changePassword(userId, changePasswordDto);
     return ok(result, 'Password changed successfully', 200);
   }
 
   @Post('logout-all-devices')
+  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Logout all devices' })
   @ApiBody({
     description: 'Logout all devices',
     type: String,
-    examples: {
-      normal: {
-        summary: 'Example of a normal user',
-        value: {
-          userId: '1234567890',
-        },
-      },
-    },
   })
   @ApiResponse({ status: 200, description: 'Logout all devices successfully' })
   @ApiResponse({ status: 400, description: 'Bad request' })
   async logoutAllDevices(
-    @Body() logoutAllDevicesAuthDto: LogoutAllDevicesAuthDto,
+    @Req() req: Request,
   ) {
+    const userId = (req as any).user.userId;
     const result = await this.authsService.logoutAllDevices(
-      logoutAllDevicesAuthDto,
+      userId,
     );
     return ok(result, 'Logout all devices successfully', 200);
   }
 
   @Post('logout-device')
+  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Logout device' })
   @ApiBody({
     description: 'Logout device',
@@ -247,7 +239,6 @@ export class AuthsController {
       normal: {
         summary: 'Example of a normal user',
         value: {
-          userId: '1234567890',
           deviceId: '1234567890',
         },
       },
@@ -255,12 +246,14 @@ export class AuthsController {
   })
   @ApiResponse({ status: 200, description: 'Logout device successfully' })
   @ApiResponse({ status: 400, description: 'Bad request' })
-  async logoutDevice(@Body() logoutDeviceAuthDto: LogoutDeviceAuthDto) {
-    const result = await this.authsService.logoutDevice(logoutDeviceAuthDto);
+  async logoutDevice(@Req() req: Request, @Body() logoutDeviceDto: LogoutDeviceAuthDto) {
+    const userId = (req as any).user.userId;
+    const result = await this.authsService.logoutDevice(userId, logoutDeviceDto);
     return ok(result, 'Logout device successfully', 200);
   }
 
   @Post('logout-not-device')
+  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Logout not device' })
   @ApiBody({
     description: 'Logout not device',
@@ -269,7 +262,6 @@ export class AuthsController {
       normal: {
         summary: 'Example of a normal user',
         value: {
-          userId: '1234567890',
           deviceId: '1234567890',
         },
       },
@@ -278,11 +270,11 @@ export class AuthsController {
   @ApiResponse({ status: 200, description: 'Logout not device successfully' })
   @ApiResponse({ status: 400, description: 'Bad request' })
   async logoutNotDevice(
-    @Body() logoutNotDeviceAuthDto: LogoutNotDeviceAuthDto,
+    @Req() req: Request,
+    @Body() logoutDeviceDto: LogoutDeviceAuthDto,
   ) {
-    const result = await this.authsService.logoutNotDevice(
-      logoutNotDeviceAuthDto,
-    );
+    const userId = (req as any).user.userId;
+    const result = await this.authsService.logoutNotDevice(userId, logoutDeviceDto);
     return ok(result, 'Logout not device successfully', 200);
   }
 
