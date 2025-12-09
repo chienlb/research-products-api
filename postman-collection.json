@@ -1,0 +1,1420 @@
+{
+  "info": {
+    "_postman_id": "f1b95c5c-0c3a-4c01-8ab1-5a90e7b6d5f7",
+    "name": "English Learning For Kids Platform API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Collection sinh từ source NestJS. Mặc định base {{baseUrl}} = http://localhost:3000/api/v1. Các endpoint có bảo vệ JWT dùng header Authorization: Bearer {{token}}."
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:3000/api/v1" },
+    { "key": "token", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "Auths",
+      "item": [
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{baseUrl}}/auths/register",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullname\": \"Nguyen Van A\",\n  \"username\": \"nguyenvana\",\n  \"email\": \"nguyenvana@gmail.com\",\n  \"password\": \"123456\",\n  \"birthDate\": \"2015-09-15\",\n  \"role\": \"parent\",\n  \"phone\": \"0912345678\",\n  \"gender\": \"male\",\n  \"typeAccount\": \"email\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{baseUrl}}/auths/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"nguyenvana@example.com\",\n  \"password\": \"123456\",\n  \"deviceId\": \"device-1\",\n  \"typeDevice\": \"android\",\n  \"typeLogin\": \"email\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Verify Email",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/auths/verify-email",
+            "body": { "mode": "raw", "raw": "{ \"codeVerify\": \"123456\" }" }
+          }
+        },
+        {
+          "name": "Resend Verification Email",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/auths/resend-verification-email",
+            "body": {
+              "mode": "raw",
+              "raw": "{ \"email\": \"nguyenvana@example.com\" }"
+            }
+          }
+        },
+        {
+          "name": "Forgot Password",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/auths/forgot-password",
+            "body": {
+              "mode": "raw",
+              "raw": "{ \"email\": \"nguyenvana@example.com\" }"
+            }
+          }
+        },
+        {
+          "name": "Reset Password",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/auths/reset-password",
+            "body": {
+              "mode": "raw",
+              "raw": "{ \"codeVerify\": \"123456\", \"password\": \"newPass123\" }"
+            }
+          }
+        },
+        {
+          "name": "Change Password",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/auths/change-password",
+            "body": {
+              "mode": "raw",
+              "raw": "{ \"email\": \"nguyenvana@example.com\", \"password\": \"123456\", \"codeVerify\": \"123456\" }"
+            }
+          }
+        },
+        {
+          "name": "Logout All Devices",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/auths/logout-all-devices",
+            "body": { "mode": "raw", "raw": "{ \"userId\": \"userid\" }" }
+          }
+        },
+        {
+          "name": "Logout Device",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/auths/logout-device",
+            "body": {
+              "mode": "raw",
+              "raw": "{ \"userId\": \"userid\", \"deviceId\": \"device-1\" }"
+            }
+          }
+        },
+        {
+          "name": "Logout Not Device",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/auths/logout-not-device",
+            "body": {
+              "mode": "raw",
+              "raw": "{ \"userId\": \"userid\", \"deviceId\": \"device-1\" }"
+            }
+          }
+        },
+        {
+          "name": "Google Login",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/auths/google/login"
+          }
+        },
+        {
+          "name": "Google Callback",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/auths/google/callback"
+          }
+        },
+        {
+          "name": "Google One Tap",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/auths/google/one-tap",
+            "body": { "mode": "raw", "raw": "{ \"credential\": \"<token>\" }" }
+          }
+        },
+        {
+          "name": "Facebook Login",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/auths/facebook/login"
+          }
+        },
+        {
+          "name": "Facebook Callback",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/auths/facebook/callback"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Users (JWT + Roles)",
+      "item": [
+        {
+          "name": "Create User",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/users",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullname\": \"Admin\",\n  \"username\": \"admin\",\n  \"email\": \"admin@example.com\",\n  \"password\": \"123456\",\n  \"role\": \"admin\",\n  \"typeAccount\": \"email\",\n  \"status\": \"active\"\n}"
+            }
+          }
+        },
+        {
+          "name": "List Users",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/users"
+          }
+        },
+        {
+          "name": "Get User By Id",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/users/:id"
+          }
+        },
+        {
+          "name": "Update User",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/users/:id",
+            "body": {
+              "mode": "raw",
+              "raw": "{ \"fullname\": \"Updated name\" }"
+            }
+          }
+        },
+        {
+          "name": "Delete User",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/users/:id"
+          }
+        },
+        {
+          "name": "Get User By Slug",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/users/slug/:slug"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Tokens",
+      "item": [
+        {
+          "name": "Create Token",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/tokens",
+            "body": {
+              "mode": "raw",
+              "raw": "{ \"userId\": \"\", \"token\": \"\", \"deviceId\": \"\", \"typeDevice\": \"\", \"typeLogin\": \"\", \"isDeleted\": false }"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Provinces",
+      "item": [
+        {
+          "name": "Create Province",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/provinces",
+            "body": {
+              "mode": "raw",
+              "raw": "{ \"name\": \"Ha Noi\", \"code\": \"HN\" }"
+            }
+          }
+        },
+        {
+          "name": "List Provinces",
+          "request": { "method": "GET", "url": "{{baseUrl}}/provinces" }
+        },
+        {
+          "name": "Get Province",
+          "request": { "method": "GET", "url": "{{baseUrl}}/provinces/:id" }
+        },
+        {
+          "name": "Update Province",
+          "request": {
+            "method": "PUT",
+            "url": "{{baseUrl}}/provinces/:id",
+            "body": { "mode": "raw", "raw": "{ \"name\": \"Updated\" }" }
+          }
+        },
+        {
+          "name": "Delete Province",
+          "request": { "method": "DELETE", "url": "{{baseUrl}}/provinces/:id" }
+        }
+      ]
+    },
+    {
+      "name": "Districts",
+      "item": [
+        {
+          "name": "Create District",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/districts",
+            "body": {
+              "mode": "raw",
+              "raw": "{ \"name\": \"Ba Dinh\", \"province\": \"<provinceId>\" }"
+            }
+          }
+        },
+        {
+          "name": "List Districts",
+          "request": { "method": "GET", "url": "{{baseUrl}}/districts" }
+        },
+        {
+          "name": "Get District",
+          "request": { "method": "GET", "url": "{{baseUrl}}/districts/:id" }
+        },
+        {
+          "name": "Update District",
+          "request": {
+            "method": "PUT",
+            "url": "{{baseUrl}}/districts/:id",
+            "body": { "mode": "raw", "raw": "{ \"name\": \"Updated\" }" }
+          }
+        },
+        {
+          "name": "Delete District",
+          "request": { "method": "DELETE", "url": "{{baseUrl}}/districts/:id" }
+        }
+      ]
+    },
+    {
+      "name": "Schools",
+      "item": [
+        {
+          "name": "Create School",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/schools",
+            "body": {
+              "mode": "raw",
+              "raw": "{ \"name\": \"THPT A\", \"district\": \"<districtId>\" }"
+            }
+          }
+        },
+        {
+          "name": "List Schools",
+          "request": { "method": "GET", "url": "{{baseUrl}}/schools" }
+        },
+        {
+          "name": "Get School",
+          "request": { "method": "GET", "url": "{{baseUrl}}/schools/:id" }
+        },
+        {
+          "name": "Update School",
+          "request": {
+            "method": "PUT",
+            "url": "{{baseUrl}}/schools/:id",
+            "body": { "mode": "raw", "raw": "{ \"name\": \"Updated\" }" }
+          }
+        },
+        {
+          "name": "Delete School",
+          "request": { "method": "DELETE", "url": "{{baseUrl}}/schools/:id" }
+        }
+      ]
+    },
+    {
+      "name": "Classes",
+      "item": [
+        {
+          "name": "Create Class",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/classes",
+            "body": {
+              "mode": "raw",
+              "raw": "{ \"classId\": \"10A1\", \"className\": \"10A1\", \"schoolGrade\": \"10\", \"schoolId\": \"<schoolId>\", \"schoolName\": \"THPT A\", \"districtName\": \"Ba Dinh\", \"provinceName\": \"Ha Noi\" }"
+            }
+          }
+        },
+        {
+          "name": "List Classes",
+          "request": { "method": "GET", "url": "{{baseUrl}}/classes" }
+        },
+        {
+          "name": "Get Class",
+          "request": { "method": "GET", "url": "{{baseUrl}}/classes/:id" }
+        },
+        {
+          "name": "Update Class",
+          "request": {
+            "method": "PUT",
+            "url": "{{baseUrl}}/classes/:id",
+            "body": { "mode": "raw", "raw": "{ \"className\": \"Updated\" }" }
+          }
+        },
+        {
+          "name": "Delete Class",
+          "request": { "method": "DELETE", "url": "{{baseUrl}}/classes/:id" }
+        }
+      ]
+    },
+    {
+      "name": "Groups",
+      "item": [
+        {
+          "name": "Create Group",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/groups",
+            "body": {
+              "mode": "raw",
+              "raw": "{ \"groupName\": \"Group A\", \"description\": \"\", \"slug\": \"group-a\", \"type\": \"study\", \"visibility\": \"public\", \"owner\": \"<userId>\", \"members\": [], \"isActive\": true }"
+            }
+          }
+        },
+        {
+          "name": "Get Group",
+          "request": { "method": "GET", "url": "{{baseUrl}}/groups/:id" }
+        },
+        {
+          "name": "List Groups",
+          "request": { "method": "GET", "url": "{{baseUrl}}/groups" }
+        },
+        {
+          "name": "Update Group",
+          "request": {
+            "method": "PUT",
+            "url": "{{baseUrl}}/groups/:id",
+            "body": { "mode": "raw", "raw": "{ \"description\": \"Updated\" }" }
+          }
+        },
+        {
+          "name": "Delete Group",
+          "request": { "method": "DELETE", "url": "{{baseUrl}}/groups/:id" }
+        },
+        {
+          "name": "Join Group",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/groups/:groupId/join",
+            "body": { "mode": "raw", "raw": "{ \"userId\": \"<userId>\" }" }
+          }
+        },
+        {
+          "name": "Leave Group",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/groups/:groupId/leave",
+            "body": { "mode": "raw", "raw": "{ \"userId\": \"<userId>\" }" }
+          }
+        },
+        {
+          "name": "Restore Group",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/groups/:groupId/restore"
+          }
+        },
+        {
+          "name": "Change Visibility",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/groups/:groupId/change-visibility",
+            "body": { "mode": "raw", "raw": "{ \"visibility\": \"public\" }" }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Group Messages",
+      "item": [
+        {
+          "name": "Create Message",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/group-messages",
+            "body": {
+              "mode": "raw",
+              "raw": "{ \"groupId\": \"\", \"senderId\": \"\", \"content\": \"Hello\", \"type\": \"text\", \"attachments\": [] }"
+            }
+          }
+        },
+        {
+          "name": "Get Message",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/group-messages/:id"
+          }
+        },
+        {
+          "name": "Get Messages By Group",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/group-messages/:groupId"
+          }
+        },
+        {
+          "name": "Update Message",
+          "request": {
+            "method": "PUT",
+            "url": "{{baseUrl}}/group-messages/:id",
+            "body": { "mode": "raw", "raw": "{ \"content\": \"Updated\" }" }
+          }
+        },
+        {
+          "name": "Delete Message",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/group-messages/:id"
+          }
+        },
+        {
+          "name": "Mark Read",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/group-messages/:id/read"
+          }
+        },
+        {
+          "name": "Mark Unread",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/group-messages/:id/unread"
+          }
+        },
+        {
+          "name": "Reply Message",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/group-messages/:id/reply",
+            "body": {
+              "mode": "raw",
+              "raw": "{ \"senderId\": \"\", \"content\": \"Reply text\" }"
+            }
+          }
+        },
+        {
+          "name": "Get Replies",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/group-messages/:id/replies"
+          }
+        },
+        {
+          "name": "Replies Count",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/group-messages/:id/replies-count"
+          }
+        },
+        {
+          "name": "Group Message Count",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/group-messages/:groupId/count"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Units",
+      "item": [
+        {
+          "name": "Create Unit",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/units",
+            "body": {
+              "mode": "raw",
+              "raw": "{ \"name\": \"Unit 1\", \"description\": \"\", \"topic\": \"Topic\", \"slug\": \"unit-1\", \"skill\": \"skill\", \"grade\": \"6\", \"level\": \"A1\", \"difficulty\": \"easy\", \"totalLessons\": 5, \"objectives\": [\"obj1\"], \"keyVocabulary\": [\"word\"], \"grammarFocus\": [\"grammar\"], \"keyExpressions\": [\"expr\"], \"materials\": {}, \"lessons\": [], \"isActive\": \"active\", \"createdBy\": \"\", \"updatedBy\": \"\" }"
+            }
+          }
+        },
+        {
+          "name": "List Units",
+          "request": { "method": "GET", "url": "{{baseUrl}}/units" }
+        },
+        {
+          "name": "Get Unit",
+          "request": { "method": "GET", "url": "{{baseUrl}}/units/:id" }
+        },
+        {
+          "name": "Update Unit",
+          "request": {
+            "method": "PATCH",
+            "url": "{{baseUrl}}/units/:id",
+            "body": { "mode": "raw", "raw": "{ \"description\": \"Updated\" }" }
+          }
+        },
+        {
+          "name": "Delete Unit",
+          "request": { "method": "DELETE", "url": "{{baseUrl}}/units/:id" }
+        }
+      ]
+    },
+    {
+      "name": "Lessons",
+      "item": [
+        {
+          "name": "Create Lesson",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/lessons",
+            "body": {
+              "mode": "raw",
+              "raw": "{ \"title\": \"Lesson 1\", \"slug\": \"lesson-1\", \"description\": \"\", \"type\": \"VOCABULARY\", \"level\": \"A1\", \"orderIndex\": 1, \"unit\": \"\", \"topic\": \"Topic\", \"skillFocus\": \"VOCABULARY\", \"content\": { \"vocabulary\": { \"words\": [\"apple\"], \"definitions\": [\"\"], \"images\": [], \"audioFiles\": [] }, \"exercises\": [] }, \"locked\": false, \"estimatedDuration\": 10, \"materials\": [], \"thumbnail\": \"\", \"audioIntro\": \"\", \"videoIntro\": \"\", \"tags\": [], \"isActive\": \"ACTIVE\", \"createdBy\": \"\", \"updatedBy\": \"\" }"
+            }
+          }
+        },
+        {
+          "name": "Get Lesson",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/lessons/:id"
+          }
+        },
+        {
+          "name": "List Lessons",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/lessons"
+          }
+        },
+        {
+          "name": "Lessons By Unit",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/lessons/:id/unit"
+          }
+        },
+        {
+          "name": "Lessons By User",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/lessons/:id/user"
+          }
+        },
+        {
+          "name": "Update Lesson",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/lessons/:id",
+            "body": { "mode": "raw", "raw": "{ \"description\": \"Updated\" }" }
+          }
+        },
+        {
+          "name": "Delete Lesson",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/lessons/:id"
+          }
+        },
+        {
+          "name": "Restore Lesson",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/lessons/:id/restore"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Invitation Codes",
+      "item": [
+        {
+          "name": "Create Invitation Code",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/invitation-codes",
+            "body": {
+              "mode": "raw",
+              "raw": "{ \"code\": \"ABC123\", \"event\": \"launch\", \"description\": \"\", \"type\": \"trial\", \"totalUses\": 10, \"usesLeft\": 10, \"startedAt\": \"2024-01-01T00:00:00Z\", \"expiredAt\": \"2024-12-31T00:00:00Z\", \"isSystem\": true, \"isActive\": true, \"createdBy\": \"\" }"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "History Invitations",
+      "item": [
+        {
+          "name": "Create History Invitation",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/history-invitations",
+            "body": {
+              "mode": "raw",
+              "raw": "{ \"userId\": \"\", \"code\": \"ABC123\", \"invitedAt\": \"2024-01-01T00:00:00Z\", \"status\": \"accepted\" }"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Feature Flags",
+      "item": [
+        {
+          "name": "Create Feature Flag",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/feature-flags",
+            "body": {
+              "mode": "raw",
+              "raw": "{ \"flagName\": \"new-ui\", \"isEnabled\": true, \"scope\": \"global\", \"targetIds\": [], \"createdBy\": \"\" }"
+            }
+          }
+        },
+        {
+          "name": "List Feature Flags",
+          "request": { "method": "GET", "url": "{{baseUrl}}/feature-flags" }
+        },
+        {
+          "name": "Get Feature Flag",
+          "request": { "method": "GET", "url": "{{baseUrl}}/feature-flags/:id" }
+        },
+        {
+          "name": "Update Feature Flag",
+          "request": {
+            "method": "PUT",
+            "url": "{{baseUrl}}/feature-flags/:id",
+            "body": { "mode": "raw", "raw": "{ \"isEnabled\": false }" }
+          }
+        },
+        {
+          "name": "Delete Feature Flag",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/feature-flags/:id"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Badges",
+      "item": [
+        {
+          "name": "Create Badge",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/badges",
+            "body": {
+              "mode": "raw",
+              "raw": "{ \"name\": \"Streak 7\", \"description\": \"7 day streak\", \"iconUrl\": \"https://...\", \"type\": \"streak\", \"level\": 1, \"criteria\": \"7-day streak\", \"isActive\": true }"
+            }
+          }
+        },
+        {
+          "name": "List Badges",
+          "request": { "method": "GET", "url": "{{baseUrl}}/badges" }
+        },
+        {
+          "name": "Get Badge",
+          "request": { "method": "GET", "url": "{{baseUrl}}/badges/:id" }
+        },
+        {
+          "name": "Update Badge",
+          "request": {
+            "method": "PUT",
+            "url": "{{baseUrl}}/badges/:id",
+            "body": { "mode": "raw", "raw": "{ \"description\": \"Updated\" }" }
+          }
+        },
+        {
+          "name": "Delete Badge",
+          "request": { "method": "DELETE", "url": "{{baseUrl}}/badges/:id" }
+        },
+        {
+          "name": "Patch Badge",
+          "request": {
+            "method": "PATCH",
+            "url": "{{baseUrl}}/badges/:id",
+            "body": { "mode": "raw", "raw": "{}" }
+          }
+        }
+      ]
+    },
+    {
+      "name": "User Badges",
+      "item": [
+        {
+          "name": "Create User Badge",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/user-badges",
+            "body": {
+              "mode": "raw",
+              "raw": "{ \"userId\": \"\", \"badgeId\": \"\", \"awardedAt\": \"2024-01-01T00:00:00Z\" }"
+            }
+          }
+        },
+        {
+          "name": "Get User Badge",
+          "request": { "method": "GET", "url": "{{baseUrl}}/user-badges/:id" }
+        },
+        {
+          "name": "List User Badges",
+          "request": { "method": "GET", "url": "{{baseUrl}}/user-badges" }
+        },
+        {
+          "name": "Update User Badge",
+          "request": {
+            "method": "PUT",
+            "url": "{{baseUrl}}/user-badges/:id",
+            "body": {
+              "mode": "raw",
+              "raw": "{ \"awardedAt\": \"2024-02-01T00:00:00Z\" }"
+            }
+          }
+        },
+        {
+          "name": "Delete User Badge",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/user-badges/:id"
+          }
+        },
+        {
+          "name": "Revoke Badge",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/user-badges/:id/revoke"
+          }
+        },
+        {
+          "name": "Restore Badge",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/user-badges/:id/restore"
+          }
+        },
+        {
+          "name": "Badges By User",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/user-badges/:userId/user-badges"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Literatures",
+      "item": [
+        {
+          "name": "Create Literature",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/literatures",
+            "body": {
+              "mode": "raw",
+              "raw": "{ \"title\": \"Story\", \"type\": \"story\", \"level\": \"A1\", \"topic\": \"Family\", \"contentEnglish\": \"Once upon a time\", \"contentVietnamese\": \"Ngày xưa\", \"vocabulary\": [], \"grammarPoints\": [], \"audioUrl\": \"\", \"imageUrl\": \"\", \"comprehensionQuestions\": [], \"isPublished\": true }"
+            }
+          }
+        },
+        {
+          "name": "List Literatures",
+          "request": { "method": "GET", "url": "{{baseUrl}}/literatures" }
+        },
+        {
+          "name": "Get Literature",
+          "request": { "method": "GET", "url": "{{baseUrl}}/literatures/:id" }
+        },
+        {
+          "name": "Update Literature",
+          "request": {
+            "method": "PUT",
+            "url": "{{baseUrl}}/literatures/:id",
+            "body": { "mode": "raw", "raw": "{ \"isPublished\": false }" }
+          }
+        },
+        {
+          "name": "Delete Literature",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/literatures/:id"
+          }
+        },
+        {
+          "name": "Patch Literature",
+          "request": {
+            "method": "PATCH",
+            "url": "{{baseUrl}}/literatures/:id",
+            "body": { "mode": "raw", "raw": "{}" }
+          }
+        },
+        {
+          "name": "Patch Literature Status",
+          "request": {
+            "method": "PATCH",
+            "url": "{{baseUrl}}/literatures/:id/status",
+            "body": { "mode": "raw", "raw": "{ \"isPublished\": true }" }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Assignments",
+      "item": [
+        {
+          "name": "Create Assignment",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/assignments",
+            "body": {
+              "mode": "raw",
+              "raw": "{ \"title\": \"Homework 1\", \"description\": \"\", \"type\": \"quiz\", \"lessonId\": \"\", \"classId\": \"\", \"dueDate\": \"2024-01-30T00:00:00Z\", \"maxScore\": 10, \"attachments\": [], \"createdBy\": \"\", \"isPublished\": true }"
+            }
+          }
+        },
+        {
+          "name": "Update Assignment",
+          "request": {
+            "method": "PUT",
+            "url": "{{baseUrl}}/assignments/:id",
+            "body": { "mode": "raw", "raw": "{ \"description\": \"Updated\" }" }
+          }
+        },
+        {
+          "name": "Delete Assignment",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/assignments/:id"
+          }
+        },
+        {
+          "name": "Get Assignment",
+          "request": { "method": "GET", "url": "{{baseUrl}}/assignments/:id" }
+        },
+        {
+          "name": "By Class",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/assignments/class/:classId"
+          }
+        },
+        {
+          "name": "By Lesson",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/assignments/lesson/:lessonId"
+          }
+        },
+        {
+          "name": "By User",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/assignments/user/:userId"
+          }
+        },
+        {
+          "name": "List Assignments",
+          "request": { "method": "GET", "url": "{{baseUrl}}/assignments" }
+        }
+      ]
+    },
+    {
+      "name": "Submissions",
+      "item": [
+        {
+          "name": "Create Submission",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/submissions",
+            "body": {
+              "mode": "raw",
+              "raw": "{ \"assignmentId\": \"\", \"studentId\": \"\", \"studentAnswers\": {}, \"submittedAt\": \"2024-01-01T00:00:00Z\", \"score\": 10, \"feedback\": \"Good\", \"attachments\": [], \"status\": \"submitted\", \"gradedBy\": \"\" }"
+            }
+          }
+        },
+        {
+          "name": "Get Submission",
+          "request": { "method": "GET", "url": "{{baseUrl}}/submissions/:id" }
+        },
+        {
+          "name": "By Assignment",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/submissions/assignment/:assignmentId"
+          }
+        },
+        {
+          "name": "By Student",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/submissions/student/:studentId"
+          }
+        },
+        {
+          "name": "Update Submission",
+          "request": {
+            "method": "PUT",
+            "url": "{{baseUrl}}/submissions/:id",
+            "body": { "mode": "raw", "raw": "{ \"score\": 8 }" }
+          }
+        },
+        {
+          "name": "Delete Submission",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/submissions/:id"
+          }
+        },
+        {
+          "name": "Grade Submission",
+          "request": {
+            "method": "PUT",
+            "url": "{{baseUrl}}/submissions/:id/grade",
+            "body": {
+              "mode": "raw",
+              "raw": "{ \"score\": 10, \"feedback\": \"Great\" }"
+            }
+          }
+        },
+        {
+          "name": "Get Submission Student",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/submissions/:id/student"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Packages",
+      "item": [
+        {
+          "name": "Create Package",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/packages",
+            "body": {
+              "mode": "raw",
+              "raw": "{ \"name\": \"Basic\", \"description\": \"\", \"type\": \"basic\", \"durationInDays\": 30, \"price\": 100000, \"currency\": \"VND\", \"features\": [\"feature1\"], \"isActive\": true, \"createdBy\": \"\" }"
+            }
+          }
+        },
+        {
+          "name": "Get Package",
+          "request": { "method": "GET", "url": "{{baseUrl}}/packages/:id" }
+        },
+        {
+          "name": "List Packages",
+          "request": { "method": "GET", "url": "{{baseUrl}}/packages" }
+        },
+        {
+          "name": "Update Package",
+          "request": {
+            "method": "PUT",
+            "url": "{{baseUrl}}/packages/:id",
+            "body": { "mode": "raw", "raw": "{ \"description\": \"Updated\" }" }
+          }
+        },
+        {
+          "name": "Delete Package",
+          "request": { "method": "DELETE", "url": "{{baseUrl}}/packages/:id" }
+        },
+        {
+          "name": "Duplicate Package",
+          "request": {
+            "method": "PUT",
+            "url": "{{baseUrl}}/packages/:id",
+            "body": { "mode": "raw", "raw": "{}" }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Subscriptions",
+      "item": [
+        {
+          "name": "Create Subscription",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/subscriptions",
+            "body": {
+              "mode": "raw",
+              "raw": "{ \"userId\": \"\", \"packageId\": \"\", \"startDate\": \"2024-01-01T00:00:00Z\", \"endDate\": \"2024-02-01T00:00:00Z\", \"status\": \"active\", \"autoRenew\": true, \"paymentId\": \"\" }"
+            }
+          }
+        },
+        {
+          "name": "List Subscriptions",
+          "request": { "method": "GET", "url": "{{baseUrl}}/subscriptions" }
+        },
+        {
+          "name": "Get Subscription",
+          "request": { "method": "GET", "url": "{{baseUrl}}/subscriptions/:id" }
+        },
+        {
+          "name": "Update Subscription",
+          "request": {
+            "method": "PATCH",
+            "url": "{{baseUrl}}/subscriptions/:id",
+            "body": { "mode": "raw", "raw": "{ \"status\": \"canceled\" }" }
+          }
+        },
+        {
+          "name": "Delete Subscription",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/subscriptions/:id"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Payments",
+      "item": [
+        {
+          "name": "Create Payment",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/payments/create",
+            "body": {
+              "mode": "raw",
+              "raw": "{ \"userId\": \"\", \"subscriptionId\": \"\", \"method\": \"stripe\", \"amount\": 100000, \"currency\": \"VND\", \"description\": \"\" }"
+            }
+          }
+        },
+        {
+          "name": "Payment Return",
+          "request": { "method": "GET", "url": "{{baseUrl}}/payments/return" }
+        },
+        {
+          "name": "Payment Webhook",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/payments/webhook",
+            "body": { "mode": "raw", "raw": "{}" }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Purchases",
+      "item": [
+        {
+          "name": "Create Purchase",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/purchases",
+            "body": {
+              "mode": "raw",
+              "raw": "{ \"userId\": \"\", \"packageId\": \"\", \"transactionId\": \"txn_1\", \"amount\": 100000, \"currency\": \"VND\", \"status\": \"completed\" }"
+            }
+          }
+        },
+        {
+          "name": "Get Purchase",
+          "request": { "method": "GET", "url": "{{baseUrl}}/purchases/:id" }
+        },
+        {
+          "name": "List Purchases",
+          "request": { "method": "GET", "url": "{{baseUrl}}/purchases" }
+        },
+        {
+          "name": "Purchases By User",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/purchases/user/:userId"
+          }
+        },
+        {
+          "name": "Update Purchase",
+          "request": {
+            "method": "PATCH",
+            "url": "{{baseUrl}}/purchases/:id",
+            "body": { "mode": "raw", "raw": "{ \"status\": \"refunded\" }" }
+          }
+        },
+        {
+          "name": "Delete Purchase",
+          "request": { "method": "DELETE", "url": "{{baseUrl}}/purchases/:id" }
+        },
+        {
+          "name": "Verify Purchase",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/purchases/verify/:id"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Feedbacks",
+      "item": [
+        {
+          "name": "Create Feedback",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/feedbacks",
+            "body": {
+              "mode": "raw",
+              "raw": "{ \"userId\": \"\", \"type\": \"bug\", \"title\": \"Lỗi\", \"content\": \"Chi tiết\", \"rating\": 5, \"relatedId\": \"\", \"isResolved\": false }"
+            }
+          }
+        },
+        {
+          "name": "List Feedbacks",
+          "request": { "method": "GET", "url": "{{baseUrl}}/feedbacks" }
+        },
+        {
+          "name": "Get Feedback",
+          "request": { "method": "GET", "url": "{{baseUrl}}/feedbacks/:id" }
+        },
+        {
+          "name": "Update Feedback",
+          "request": {
+            "method": "PUT",
+            "url": "{{baseUrl}}/feedbacks/:id",
+            "body": { "mode": "raw", "raw": "{ \"isResolved\": true }" }
+          }
+        },
+        {
+          "name": "Delete Feedback",
+          "request": { "method": "DELETE", "url": "{{baseUrl}}/feedbacks/:id" }
+        }
+      ]
+    },
+    {
+      "name": "Supports",
+      "item": [
+        {
+          "name": "Create Support",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/supports",
+            "body": {
+              "mode": "raw",
+              "raw": "{ \"userId\": \"\", \"subject\": \"Help\", \"message\": \"Need support\", \"attachments\": [] }"
+            }
+          }
+        },
+        {
+          "name": "Get Support",
+          "request": { "method": "GET", "url": "{{baseUrl}}/supports/:id" }
+        },
+        {
+          "name": "List Supports",
+          "request": { "method": "GET", "url": "{{baseUrl}}/supports" }
+        },
+        {
+          "name": "Supports By User",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/supports/user/:userId"
+          }
+        },
+        {
+          "name": "Supports By Status",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/supports/status/:status"
+          }
+        },
+        {
+          "name": "Update Support",
+          "request": {
+            "method": "PUT",
+            "url": "{{baseUrl}}/supports/:id",
+            "body": { "mode": "raw", "raw": "{ \"status\": \"closed\" }" }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Progresses",
+      "item": [
+        {
+          "name": "Create Progress",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/progresses",
+            "body": {
+              "mode": "raw",
+              "raw": "{ \"userId\": \"\", \"lessonId\": \"\", \"progress\": 50 }"
+            }
+          }
+        },
+        {
+          "name": "List Progresses",
+          "request": { "method": "GET", "url": "{{baseUrl}}/progresses" }
+        },
+        {
+          "name": "Get Progress",
+          "request": { "method": "GET", "url": "{{baseUrl}}/progresses/:id" }
+        },
+        {
+          "name": "Update Progress",
+          "request": {
+            "method": "PATCH",
+            "url": "{{baseUrl}}/progresses/:id",
+            "body": { "mode": "raw", "raw": "{ \"progress\": 70 }" }
+          }
+        },
+        {
+          "name": "Delete Progress",
+          "request": { "method": "DELETE", "url": "{{baseUrl}}/progresses/:id" }
+        }
+      ]
+    },
+    {
+      "name": "Discussions",
+      "item": [
+        {
+          "name": "Create Discussion",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/discussions",
+            "body": {
+              "mode": "raw",
+              "raw": "{ \"title\": \"Topic\", \"content\": \"Body\" }"
+            }
+          }
+        },
+        {
+          "name": "List Discussions",
+          "request": { "method": "GET", "url": "{{baseUrl}}/discussions" }
+        },
+        {
+          "name": "Get Discussion",
+          "request": { "method": "GET", "url": "{{baseUrl}}/discussions/:id" }
+        },
+        {
+          "name": "Update Discussion",
+          "request": {
+            "method": "PATCH",
+            "url": "{{baseUrl}}/discussions/:id",
+            "body": { "mode": "raw", "raw": "{ \"content\": \"Updated\" }" }
+          }
+        },
+        {
+          "name": "Delete Discussion",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/discussions/:id"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Notifications",
+      "item": [
+        {
+          "name": "Create Notification",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/notifications",
+            "body": {
+              "mode": "raw",
+              "raw": "{ \"title\": \"Title\", \"message\": \"Body\" }"
+            }
+          }
+        },
+        {
+          "name": "List Notifications",
+          "request": { "method": "GET", "url": "{{baseUrl}}/notifications" }
+        },
+        {
+          "name": "Get Notification",
+          "request": { "method": "GET", "url": "{{baseUrl}}/notifications/:id" }
+        },
+        {
+          "name": "Update Notification",
+          "request": {
+            "method": "PATCH",
+            "url": "{{baseUrl}}/notifications/:id",
+            "body": { "mode": "raw", "raw": "{ \"read\": true }" }
+          }
+        },
+        {
+          "name": "Delete Notification",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/notifications/:id"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Competitions",
+      "item": [
+        {
+          "name": "Create Competition",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/competitions",
+            "body": { "mode": "raw", "raw": "{ \"name\": \"Contest\" }" }
+          }
+        },
+        {
+          "name": "List Competitions",
+          "request": { "method": "GET", "url": "{{baseUrl}}/competitions" }
+        },
+        {
+          "name": "Get Competition",
+          "request": { "method": "GET", "url": "{{baseUrl}}/competitions/:id" }
+        },
+        {
+          "name": "Update Competition",
+          "request": {
+            "method": "PATCH",
+            "url": "{{baseUrl}}/competitions/:id",
+            "body": { "mode": "raw", "raw": "{ \"name\": \"Updated\" }" }
+          }
+        },
+        {
+          "name": "Delete Competition",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/competitions/:id"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Packages Cloudflare",
+      "item": [
+        {
+          "name": "Upload R2",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/cloudflare",
+            "body": { "mode": "raw", "raw": "{ \"file\": \"<base64>\" }" }
+          }
+        }
+      ]
+    },
+    {
+      "name": "History Invitations & Invitation Codes (shortcuts)",
+      "item": []
+    }
+  ]
+}

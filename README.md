@@ -1,14 +1,13 @@
 <div align="center">
 
-# 🎓 SPNC API - English Learning Platform
+# 🎓 SPNC API – English Learning Platform
 
-**API Backend cho nền tảng học tiếng Anh trực tuyến**
+Backend cho nền tảng học tiếng Anh trực tuyến, xây dựng với NestJS + MongoDB + Redis.
 
 [![NestJS](https://img.shields.io/badge/NestJS-11.0.1-E0234E?style=for-the-badge&logo=nestjs&logoColor=white)](https://nestjs.com/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.7.3-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![MongoDB](https://img.shields.io/badge/MongoDB-8.19.2-47A248?style=for-the-badge&logo=mongodb&logoColor=white)](https://www.mongodb.com/)
 [![Redis](https://img.shields.io/badge/Redis-6.0+-DC382D?style=for-the-badge&logo=redis&logoColor=white)](https://redis.io/)
-
 [![License](https://img.shields.io/badge/License-Private-red?style=flat-square)](LICENSE)
 [![Node.js](https://img.shields.io/badge/Node.js-18+-339933?style=flat-square&logo=node.js&logoColor=white)](https://nodejs.org/)
 
@@ -18,205 +17,83 @@
 
 ## 📑 Mục lục
 
-- [🎯 Tổng quan](#-tổng-quan)
-- [✨ Tính năng](#-tính-năng)
-- [🛠️ Công nghệ](#️-công-nghệ)
-- [🚀 Cài đặt](#-cài-đặt)
-- [⚙️ Cấu hình](#️-cấu-hình)
-- [📚 API Documentation](#-api-documentation)
-- [📁 Cấu trúc dự án](#-cấu-trúc-dự-án)
-- [🔧 Scripts](#-scripts)
+- [Tổng quan](#-tổng-quan)
+- [Tính năng](#-tính-năng)
+- [Công nghệ](#-công-nghệ)
+- [Cài đặt nhanh](#-cài-đặt-nhanh)
+- [Cấu hình môi trường](#-cấu-hình-môi-trường)
+- [API & Swagger](#-api--swagger)
+- [Cấu trúc dự án](#-cấu-trúc-dự-án)
+- [Scripts](#-scripts)
+- [Bảo mật](#-bảo-mật)
+- [Troubleshooting](#-troubleshooting)
+- [License & Contributors](#-license--contributors)
 
 ---
 
 ## 🎯 Tổng quan
 
-**SPNC API** là hệ thống backend được xây dựng bằng **NestJS** cho nền tảng học tiếng Anh trực tuyến. Hệ thống cung cấp đầy đủ các tính năng từ quản lý người dùng, bài học, bài tập, nhóm học tập, cuộc thi đến thanh toán.
+**SPNC API** cung cấp RESTful API cho nền tảng học tiếng Anh: quản lý người dùng, bài học, bài tập, nhóm, cuộc thi, thanh toán, thông báo và nhiều hơn nữa. Hỗ trợ JWT, OAuth2 (Google/Facebook), RBAC, rate limiting, caching và hệ thống email/templates đầy đủ.
 
-### 🎨 Đặc điểm nổi bật
-
-- ✅ RESTful API với Swagger documentation
-- ✅ JWT Authentication với refresh token
-- ✅ OAuth 2.0 (Google, Facebook)
-- ✅ Role-based Access Control (RBAC)
-- ✅ Real-time notifications
-- ✅ Payment integration (VNPay, Stripe)
-- ✅ File upload (Cloudflare R2, Cloudinary)
-- ✅ Email service với Handlebars templates
-- ✅ Redis caching
-- ✅ Rate limiting & security headers
+> Truy cập nhanh tài liệu API: `http://localhost:3000/docs` (Swagger)  
+> Base URL mặc định: `http://localhost:3000/api/v1`
 
 ---
 
 ## ✨ Tính năng
 
-### 🔐 Xác thực & Phân quyền
-
-- Đăng ký/Đăng nhập với email và OAuth
-- JWT Authentication với Access/Refresh Token
-- Email verification và password reset
-- Role-based Access Control (Admin, Teacher, Student, Parent)
-- Multi-device login management
-
-### 👥 Quản lý Người dùng
-
-- CRUD operations cho users
-- Profile management với avatar
-- Badges system và achievements
-- User statistics và activity tracking
-- Soft delete và restore
-
-### 📚 Học tập
-
-- **Literatures**: Quản lý tài liệu học tập (truyện, bài đọc)
-- **Lessons**: Quản lý bài học với multimedia
-- **Units**: Tổ chức bài học theo units
-- **Assignments**: Giao bài tập cho học sinh
-- **Submissions**: Nộp và chấm bài tập
-- **Progresses**: Theo dõi tiến độ học tập
-- **Competitions**: Tổ chức cuộc thi với leaderboard
-
-### 👨‍👩‍👧‍👦 Nhóm & Lớp học
-
-- **Groups**: Quản lý nhóm học tập (Public/Private)
-- **Classes**: Quản lý lớp học và enrollment
-- **Group Messages**: Real-time messaging trong nhóm
-- **Discussions**: Thảo luận với comments
-- **Invitations**: Mời tham gia nhóm/lớp
-
-### 💳 Thanh toán & Gói dịch vụ
-
-- **Packages**: Quản lý gói dịch vụ
-- **Subscriptions**: Đăng ký và quản lý gói dịch vụ
-- **Payments**: Tích hợp VNPay và Stripe
-- **Purchases**: Quản lý giao dịch mua hàng
-
-### 🔔 Khác
-
-- **Notifications**: Real-time và email notifications
-- **Feedbacks**: Hệ thống phản hồi từ người dùng
-- **Supports**: Support ticket system
-- **Badges**: Huy hiệu thành tích
-- **Feature Flags**: Bật/tắt tính năng
-- **Provinces/Districts/Schools**: Quản lý địa danh và trường học
+- 🔐 Auth & RBAC: JWT Access/Refresh, email verify/reset, Google/Facebook OAuth, phân quyền Admin/Teacher/Student/Parent, quản lý đa thiết bị
+- 👥 Người dùng & hồ sơ: CRUD, avatar, badges/achievements, thống kê, soft delete/restore
+- 📚 Học tập: Units, Lessons (multimedia), Literatures, Assignments, Submissions, Progresses, Competitions
+- 🏫 Nhóm & lớp: Groups (Public/Private), Classes, Group Messages (real-time), Discussions, Invitations
+- 💳 Thanh toán: Packages, Subscriptions, Payments (VNPay/Stripe), Purchases, Feature Flags
+- 🔔 Khác: Notifications (real-time/email), Feedbacks, Supports, địa danh (Provinces/Districts/Schools), uploads (Cloudflare R2/Images/Cloudinary)
 
 ---
 
 ## 🛠️ Công nghệ
 
-### Core
-
-- **NestJS** ^11.0.1 - Framework chính
-- **TypeScript** ^5.7.3 - Ngôn ngữ lập trình
-- **Express** ^5.1.0 - HTTP server
-
-### Database
-
-- **MongoDB** ^8.19.2 với **Mongoose** ^11.0.3
-- **Redis** ^5.9.0 với **ioredis** ^5.8.2
-
-### Authentication & Security
-
-- **Passport** với JWT, Google OAuth, Facebook OAuth
-- **bcrypt** ^6.0.0 - Mã hóa mật khẩu
-- **helmet** ^8.1.0 - Security headers
-- **express-rate-limit** ^8.2.1 - Rate limiting
-
-### Validation
-
-- **class-validator** ^0.14.2
-- **class-transformer** ^0.5.1
-- **zod** ^4.1.12 - Schema validation
-
-### API Documentation
-
-- **@nestjs/swagger** ^11.2.1
-- **swagger-ui-express** ^5.0.1
-
-### Payment & Storage
-
-- **VNPay** - Thanh toán Việt Nam
-- **Stripe** - Thanh toán quốc tế
-- **Cloudflare R2** - Object storage
-- **Cloudflare Images** - Image optimization
-- **Cloudinary** - Alternative image storage
-
-### Email
-
-- **nodemailer** ^7.0.10 với **handlebars** ^4.7.8
-
-### Testing
-
-- **Jest** ^30.0.0
-- **Supertest** ^7.0.0
+- Core: NestJS 11, TypeScript 5, Express 5
+- Data: MongoDB (Mongoose 11), Redis (ioredis 5)
+- Auth/Security: Passport (JWT, Google, Facebook), bcrypt 6, helmet 8, express-rate-limit 8, class-validator/transformer, zod
+- Docs: @nestjs/swagger 11, swagger-ui-express 5
+- Payments/Storage: VNPay, Stripe, Cloudflare R2/Images, Cloudinary
+- Email: nodemailer + handlebars
+- Testing: Jest 30, Supertest 7
 
 ---
 
-## 🚀 Cài đặt
-
-### Yêu cầu hệ thống
-
-- **Node.js**: >= 18.x
-- **MongoDB**: >= 5.0
-- **Redis**: >= 6.0
-
-### Bước 1: Clone repository
+## 🚀 Cài đặt nhanh
 
 ```bash
+# 1) Clone
 git clone <repository-url>
 cd spnc-api
-```
 
-### Bước 2: Cài đặt dependencies
+# 2) Cài dependencies
+pnpm install   # hoặc npm install / yarn install
 
-```bash
-npm install
-# hoặc
-pnpm install
-# hoặc
-yarn install
-```
-
-### Bước 3: Cấu hình environment variables
-
-Tạo file `.env` trong thư mục gốc (xem phần [Cấu hình](#️-cấu-hình))
-
-### Bước 4: Khởi động services
-
-**MongoDB:**
-
-```bash
-# Docker
+# 3) Khởi chạy MongoDB & Redis (ví dụ Docker)
 docker run -d -p 27017:27017 --name mongodb mongo:latest
-```
-
-**Redis:**
-
-```bash
-# Docker
 docker run -d -p 6379:6379 --name redis redis:latest
-```
 
-### Bước 5: Chạy ứng dụng
+# 4) Cấu hình .env (xem mẫu phía dưới)
 
-```bash
-# Development
-npm run start:dev
-
+# 5) Chạy app
+pnpm start:dev
 # Production
-npm run build
-npm run start:prod
+pnpm build && pnpm start:prod
 ```
 
-Ứng dụng sẽ chạy tại `http://localhost:3000`
+Ứng dụng chạy tại `http://localhost:3000` (Swagger: `/docs`, API: `/api/v1`).
 
 ---
 
-## ⚙️ Cấu hình
+## ⚙️ Cấu hình môi trường
 
-Tạo file `.env` với các biến môi trường sau:
+Tạo file `.env` ở thư mục gốc.
 
-### Cơ bản
+**Cơ bản**
 
 ```env
 NODE_ENV=development
@@ -225,7 +102,7 @@ API_PREFIX=/api
 API_VERSION=v1
 ```
 
-### Database
+**Database**
 
 ```env
 MONGODB_URI=mongodb://localhost:27017/spnc_db
@@ -235,7 +112,7 @@ REDIS_PORT=6379
 REDIS_PASSWORD=
 ```
 
-### JWT
+**JWT**
 
 ```env
 JWT_ACCESS_TOKEN_SECRET=your-access-token-secret
@@ -246,13 +123,10 @@ JWT_VERIFICATION_TOKEN_SECRET=your-verification-token-secret
 JWT_VERIFICATION_TOKEN_EXPIRATION=5m
 ```
 
-**⚠️ Lưu ý**: Generate secrets mạnh cho production:
+> Gợi ý tạo secret mạnh:
+> `node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"`
 
-```bash
-node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
-```
-
-### Email
+**Email**
 
 ```env
 EMAIL_SERVICE=gmail
@@ -262,21 +136,16 @@ EMAIL_USER=your-email@gmail.com
 EMAIL_PASS=your-app-password
 ```
 
-### CORS
+**CORS & Rate limit**
 
 ```env
 CORS_ORIGINS=http://localhost:5173,http://localhost:3001
 CORS_CREDENTIALS=true
-```
-
-### Rate Limiting
-
-```env
 RATE_LIMIT_WINDOW_MS=60000
 RATE_LIMIT_MAX=100
 ```
 
-### Swagger
+**Swagger**
 
 ```env
 SWAGGER_TITLE=English Learning API
@@ -286,7 +155,7 @@ SWAGGER_TAG=education,english,learning
 SWAGGER_PATH=docs
 ```
 
-### Payment (Optional)
+**Thanh toán (tùy chọn)**
 
 ```env
 # VNPay
@@ -300,7 +169,7 @@ STRIPE_SECRET_KEY=sk_test_...
 STRIPE_WEBHOOK_SECRET=whsec_...
 ```
 
-### OAuth (Optional)
+**OAuth (tùy chọn)**
 
 ```env
 # Google
@@ -313,7 +182,7 @@ FACEBOOK_APP_ID=your-facebook-app-id
 FACEBOOK_APP_SECRET=your-facebook-app-secret
 ```
 
-### Cloudflare (Optional)
+**Cloudflare & Cloudinary (tùy chọn)**
 
 ```env
 CF_ACCOUNT_ID=your-cloudflare-account-id
@@ -323,18 +192,14 @@ R2_ACCESS_KEY_ID=your-r2-access-key
 R2_SECRET_ACCESS_KEY=your-r2-secret-key
 R2_BUCKET=your-bucket-name
 R2_PUBLIC_BASE=https://your-domain.com
-```
 
-### Cloudinary (Optional)
-
-```env
 CLOUDINARY_CLOUD_NAME=your-cloud-name
 CLOUDINARY_API_KEY=your-api-key
 CLOUDINARY_API_SECRET=your-api-secret
 CLOUDINARY_FOLDER=english_learning_uploads
 ```
 
-### Other (Optional)
+**Khác (tùy chọn)**
 
 ```env
 BODY_LIMIT_JSON=1mb
@@ -346,71 +211,35 @@ OPEN_ROUTER_API=your-open-router-api-key
 
 ---
 
-## 📚 API Documentation
+## 📚 API & Swagger
 
-Sau khi khởi động ứng dụng, truy cập Swagger UI tại:
+- Swagger UI: `http://localhost:3000/docs`
+- Base URL: `http://localhost:3000/api/v1`
+- Auth header: `Authorization: Bearer <access-token>`
 
-```
-http://localhost:3000/docs
-```
-
-### API Base URL
-
-```
-http://localhost:3000/api/v1
-```
-
-### Authentication
-
-Hầu hết các endpoints yêu cầu Bearer Token:
-
-```http
-Authorization: Bearer <your-access-token>
-```
-
-### Response Format
+**Response mặc định**
 
 ```json
 {
   "success": true,
   "message": "Thành công",
-  "data": { ... },
+  "data": {},
   "statusCode": 200
 }
 ```
 
-### Ví dụ API Request
-
-**Đăng ký:**
+**Ví dụ**
 
 ```bash
+# Đăng ký
 curl -X POST http://localhost:3000/api/v1/auths/register \
   -H "Content-Type: application/json" \
-  -d '{
-    "fullname": "Nguyen Van A",
-    "username": "nguyenvana",
-    "email": "nguyenvana@gmail.com",
-    "password": "SecurePassword123!",
-    "role": "student"
-  }'
-```
+  -d '{"fullname":"Nguyen Van A","username":"nguyenvana","email":"nguyenvana@gmail.com","password":"SecurePassword123!","role":"student"}'
 
-**Đăng nhập:**
-
-```bash
+# Đăng nhập
 curl -X POST http://localhost:3000/api/v1/auths/login \
   -H "Content-Type: application/json" \
-  -d '{
-    "email": "nguyenvana@gmail.com",
-    "password": "SecurePassword123!"
-  }'
-```
-
-**Lấy danh sách Literatures:**
-
-```bash
-curl -X GET "http://localhost:3000/api/v1/literatures?page=1&limit=10" \
-  -H "Authorization: Bearer <access-token>"
+  -d '{"email":"nguyenvana@gmail.com","password":"SecurePassword123!"}'
 ```
 
 ---
@@ -420,57 +249,25 @@ curl -X GET "http://localhost:3000/api/v1/literatures?page=1&limit=10" \
 ```
 src/
 ├── app/
-│   ├── common/              # Shared utilities
-│   │   ├── decorators/      # Custom decorators (@Roles)
-│   │   ├── filters/         # Exception filters
-│   │   ├── guards/          # Auth guards
-│   │   ├── response/        # API response utilities
-│   │   └── utils/           # Helper functions
-│   ├── configs/             # Configuration modules
-│   │   ├── cache/           # Redis configuration
-│   │   ├── database/        # MongoDB & Redis configs
-│   │   ├── env/             # Environment validation
-│   │   └── mail/            # Email configuration
-│   ├── modules/             # Feature modules
-│   │   ├── auths/           # Authentication
-│   │   ├── users/           # User management
-│   │   ├── literatures/     # Learning materials
-│   │   ├── lessons/         # Lessons
-│   │   ├── assignments/     # Assignments
-│   │   ├── submissions/     # Submissions
-│   │   ├── groups/          # Study groups
-│   │   ├── classes/         # Classes
-│   │   ├── competitions/    # Competitions
-│   │   ├── payments/        # Payments
-│   │   ├── packages/        # Service packages
-│   │   ├── subscriptions/   # Subscriptions
-│   │   ├── notifications/   # Notifications
-│   │   ├── feedbacks/       # Feedbacks
-│   │   ├── supports/        # Supports
-│   │   ├── badges/          # Badges
-│   │   ├── progresses/      # Progress tracking
-│   │   └── ...              # Other modules
+│   ├── common/              # Decorators, guards, filters, utils, response
+│   ├── configs/             # Database, cache, env, mail
+│   ├── modules/             # Tất cả feature modules (auths, users, lessons,...)
 │   └── templates/           # Email templates (Handlebars)
 ├── app.controller.ts        # Root controller
-├── app.module.ts           # Root module
-├── app.service.ts          # Root service
-└── main.ts                 # Application entry point
+├── app.module.ts            # Root module
+├── app.service.ts           # Root service
+└── main.ts                  # Entry point
 ```
 
-### Module Structure
-
-Mỗi module tuân theo cấu trúc:
+Module chuẩn:
 
 ```
 module-name/
 ├── module-name.controller.ts    # HTTP endpoints
 ├── module-name.service.ts       # Business logic
-├── module-name.module.ts        # Module configuration
-├── dto/                         # Data Transfer Objects
-│   ├── create-module-name.dto.ts
-│   └── update-module-name.dto.ts
-└── schema/                      # MongoDB schemas
-    └── module-name.schema.ts
+├── module-name.module.ts        # Module wiring
+├── dto/                         # DTOs
+└── schema/                      # Mongoose schemas
 ```
 
 ---
@@ -479,95 +276,51 @@ module-name/
 
 ```bash
 # Development
-npm run start:dev          # Chạy với watch mode
-npm run start:debug       # Chạy với debug mode
+pnpm start:dev
+pnpm start:debug
 
 # Production
-npm run build             # Build ứng dụng
-npm run start:prod        # Chạy production build
+pnpm build
+pnpm start:prod
 
 # Code Quality
-npm run format            # Format code với Prettier
-npm run lint              # Lint và fix code
+pnpm format
+pnpm lint
 
 # Testing
-npm run test              # Chạy unit tests
-npm run test:watch        # Chạy tests ở watch mode
-npm run test:cov          # Chạy tests với coverage
-npm run test:e2e          # Chạy end-to-end tests
+pnpm test
+pnpm test:watch
+pnpm test:cov
+pnpm test:e2e
 ```
 
 ---
 
 ## 🔒 Bảo mật
 
-Hệ thống đã tích hợp các tính năng bảo mật:
-
-- ✅ **Helmet.js** - Security headers
-- ✅ **Rate Limiting** - Giới hạn request
-- ✅ **CORS** - Kiểm soát truy cập
-- ✅ **Input Validation** - Validate tất cả inputs
-- ✅ **Password Hashing** - bcrypt với salt
-- ✅ **JWT Security** - Secure token generation
-- ✅ **SQL Injection Protection** - Mongoose ODM
-
-### Best Practices
-
-1. Không commit `.env` vào git
-2. Sử dụng secrets mạnh cho production
-3. Cập nhật dependencies thường xuyên
-4. Luôn sử dụng HTTPS trong production
-5. Validate tất cả inputs
-6. Implement proper error handling
+- Helmet, rate limiting, CORS, input validation
+- Bcrypt hash mật khẩu, JWT bảo vệ routes
+- Không commit `.env`; dùng secret mạnh; bật HTTPS ở production
+- Thường xuyên cập nhật dependencies
 
 ---
 
 ## 🐛 Troubleshooting
 
-### MongoDB Connection Error
-
-```bash
-# Kiểm tra MongoDB đang chạy
-mongosh mongodb://localhost:27017
-```
-
-### Redis Connection Error
-
-```bash
-# Kiểm tra Redis đang chạy
-redis-cli ping
-```
-
-### Port Already in Use
-
-```bash
-# Tìm process đang dùng port
-lsof -i :3000          # macOS/Linux
-netstat -ano | findstr :3000  # Windows
-```
-
-### Email Not Sending
-
-- Kiểm tra EMAIL_USER và EMAIL_PASS
-- Đối với Gmail, sử dụng App Password (không phải mật khẩu thường)
-- Kiểm tra EMAIL_SERVICE và EMAIL_HOST
+- **MongoDB**: `mongosh mongodb://localhost:27017`
+- **Redis**: `redis-cli ping`
+- **Port 3000 bận**: `netstat -ano | findstr :3000` (Windows) hoặc `lsof -i :3000` (macOS/Linux)
+- **Email không gửi**: kiểm tra EMAIL_USER/PASS, dùng App Password với Gmail
 
 ---
 
-## 📝 License
+## 📝 License & Contributors
 
-**UNLICENSED** - Private project
-
----
-
-## 👥 Contributors
-
-SPNC Development Team
-
----
+- License: **UNLICENSED** (private)
+- Contributors: **SPNC Development Team**
 
 <div align="center">
 
-**Made with ❤️ by SPNC Development Team**
+Made with ❤️ by SPNC Development Team
 
 </div>
