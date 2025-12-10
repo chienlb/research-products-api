@@ -8,6 +8,8 @@ import {
   Param,
   Query,
   UseGuards,
+  Req,
+  Request,
 } from '@nestjs/common';
 import { ProgressesService } from './progresses.service';
 import { CreateProgressDto } from './dto/create-progress.dto';
@@ -22,12 +24,13 @@ import {
 } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { ProgressDocument, ProgressType } from './schema/progress.schema';
+import { PaginationDto } from '../pagination/pagination.dto';
 
 @Controller('progresses')
 @ApiTags('Progresses')
 @UseGuards(AuthGuard('jwt'))
 export class ProgressesController {
-  constructor(private readonly progressesService: ProgressesService) {}
+  constructor(private readonly progressesService: ProgressesService) { }
 
   @Post()
   @ApiOperation({ summary: 'Create a new progress' })
@@ -118,6 +121,7 @@ export class ProgressesController {
   }
 
   @Get('user/:userId')
+  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Get all progresses by user id' })
   @ApiQuery({
     name: 'page',
@@ -163,26 +167,15 @@ export class ProgressesController {
   })
   @ApiResponse({ status: 400, description: 'Bad request' })
   async getProgressByUserId(
-    @Param('userId') userId: string,
-    @Query('page') page: number = 1,
-    @Query('limit') limit: number = 10,
-  ): Promise<{
-    data: ProgressDocument[];
-    total: number;
-    totalPages: number;
-    currentPage: number;
-    hasNextPage: boolean;
-    hasPreviousPage: boolean;
-    limit: number;
-  }> {
-    return await this.progressesService.getProgressByUserId(
-      userId,
-      page,
-      limit,
-    );
+    @Req() req: Request,
+    @Query() paginationDto: PaginationDto
+  ) {
+    const userId = (req as any).user.userId;
+    return await this.progressesService.getProgressByUserId(userId, paginationDto);
   }
 
   @Get('course/:courseId')
+  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Get all progresses by course id' })
   @ApiQuery({
     name: 'page',
@@ -229,8 +222,7 @@ export class ProgressesController {
   @ApiResponse({ status: 400, description: 'Bad request' })
   async getProgressByCourseId(
     @Param('courseId') courseId: string,
-    @Query('page') page: number = 1,
-    @Query('limit') limit: number = 10,
+    @Query() paginationDto: PaginationDto
   ): Promise<{
     data: ProgressDocument[];
     total: number;
@@ -242,12 +234,12 @@ export class ProgressesController {
   }> {
     return await this.progressesService.getProgressByCourseId(
       courseId,
-      page,
-      limit,
+      paginationDto,
     );
   }
 
   @Get('lesson/:lessonId')
+  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Get all progresses by lesson id' })
   @ApiQuery({
     name: 'page',
@@ -294,8 +286,7 @@ export class ProgressesController {
   @ApiResponse({ status: 400, description: 'Bad request' })
   async getProgressByLessonId(
     @Param('lessonId') lessonId: string,
-    @Query('page') page: number = 1,
-    @Query('limit') limit: number = 10,
+    @Query() paginationDto: PaginationDto
   ): Promise<{
     data: ProgressDocument[];
     total: number;
@@ -307,12 +298,12 @@ export class ProgressesController {
   }> {
     return await this.progressesService.getProgressByLessonId(
       lessonId,
-      page,
-      limit,
+      paginationDto,
     );
   }
 
   @Get('assignment/:assignmentId')
+  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Get all progresses by assignment id' })
   @ApiQuery({
     name: 'page',
@@ -359,8 +350,7 @@ export class ProgressesController {
   @ApiResponse({ status: 400, description: 'Bad request' })
   async getProgressByAssignmentId(
     @Param('assignmentId') assignmentId: string,
-    @Query('page') page: number = 1,
-    @Query('limit') limit: number = 10,
+    @Query() paginationDto: PaginationDto
   ): Promise<{
     data: ProgressDocument[];
     total: number;
@@ -372,12 +362,12 @@ export class ProgressesController {
   }> {
     return await this.progressesService.getProgressByAssignmentId(
       assignmentId,
-      page,
-      limit,
+      paginationDto,
     );
   }
 
   @Get('user/:userId/course/:courseId')
+  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Get all progresses by user id and course id' })
   @ApiQuery({
     name: 'page',
@@ -423,10 +413,9 @@ export class ProgressesController {
   })
   @ApiResponse({ status: 400, description: 'Bad request' })
   async getProgressByUserIdAndCourseId(
-    @Param('userId') userId: string,
+    @Req() req: Request,
     @Param('courseId') courseId: string,
-    @Query('page') page: number = 1,
-    @Query('limit') limit: number = 10,
+    @Query() paginationDto: PaginationDto
   ): Promise<{
     data: ProgressDocument[];
     total: number;
@@ -436,15 +425,16 @@ export class ProgressesController {
     hasPreviousPage: boolean;
     limit: number;
   }> {
+    const userId = (req as any).user.userId;
     return await this.progressesService.getProgressByUserIdAndCourseId(
       userId,
       courseId,
-      page,
-      limit,
+      paginationDto,
     );
   }
 
   @Get('all')
+  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Get all progresses' })
   @ApiQuery({
     name: 'page',
@@ -490,8 +480,7 @@ export class ProgressesController {
   })
   @ApiResponse({ status: 400, description: 'Bad request' })
   async getAllProgress(
-    @Query('page') page: number = 1,
-    @Query('limit') limit: number = 10,
+    @Query() paginationDto: PaginationDto
   ): Promise<{
     data: ProgressDocument[];
     total: number;
@@ -501,6 +490,6 @@ export class ProgressesController {
     hasPreviousPage: boolean;
     limit: number;
   }> {
-    return await this.progressesService.getAllProgress(page, limit);
+    return await this.progressesService.getAllProgress(paginationDto);
   }
 }

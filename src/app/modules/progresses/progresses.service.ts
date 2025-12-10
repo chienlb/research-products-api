@@ -7,6 +7,7 @@ import { UpdateProgressDto } from './dto/update-progress.dto';
 import { AssignmentsService } from '../assignments/assignments.service';
 import { LessonsService } from '../lessons/lessons.service';
 import { UsersService } from '../users/users.service';
+import { PaginationDto } from '../pagination/pagination.dto';
 
 @Injectable()
 export class ProgressesService {
@@ -15,7 +16,7 @@ export class ProgressesService {
     private readonly lessonsService: LessonsService,
     private readonly assignmentsService: AssignmentsService,
     private readonly usersService: UsersService,
-  ) {}
+  ) { }
 
   async createProgress(createProgressDto: CreateProgressDto): Promise<ProgressDocument> {
     try {
@@ -56,7 +57,8 @@ export class ProgressesService {
   async updateProgress(updateProgressDto: UpdateProgressDto): Promise<ProgressDocument> {
     try {
       const progress = await this.progressModel.findOneAndUpdate(
-        { userId: updateProgressDto.userId,
+        {
+          userId: updateProgressDto.userId,
           type: updateProgressDto.type,
           courseId: updateProgressDto.courseId,
           lessonId: updateProgressDto.lessonId,
@@ -93,7 +95,7 @@ export class ProgressesService {
     }
   }
 
-  async getProgressByUserId(userId: string, page: number = 1, limit: number = 10): Promise<{
+  async getProgressByUserId(userId: string, paginationDto: PaginationDto): Promise<{
     data: ProgressDocument[];
     total: number;
     totalPages: number;
@@ -103,10 +105,10 @@ export class ProgressesService {
     limit: number;
   }> {
     try {
-      const progress = await this.progressModel.find({ userId: userId }).skip((page - 1) * limit).limit(limit);
+      const progress = await this.progressModel.find({ userId: userId }).skip((paginationDto.page - 1) * paginationDto.limit).limit(paginationDto.limit);
       const total = await this.progressModel.countDocuments({ userId: userId });
-      const totalPages = Math.ceil(total / limit);
-      const currentPage = Math.max(1, Math.min(page, totalPages));
+      const totalPages = Math.ceil(total / paginationDto.limit);
+      const currentPage = Math.max(1, Math.min(paginationDto.page, totalPages));
       return {
         data: progress,
         total: total,
@@ -114,14 +116,14 @@ export class ProgressesService {
         currentPage: currentPage,
         hasNextPage: currentPage < totalPages,
         hasPreviousPage: currentPage > 1,
-        limit: limit,
+        limit: paginationDto.limit,
       };
     } catch (error) {
       throw new BadRequestException(error);
     }
   }
 
-  async getProgressByCourseId(courseId: string, page: number = 1, limit: number = 10): Promise<{
+  async getProgressByCourseId(courseId: string, paginationDto: PaginationDto): Promise<{
     data: ProgressDocument[];
     total: number;
     totalPages: number;
@@ -131,10 +133,10 @@ export class ProgressesService {
     limit: number;
   }> {
     try {
-      const progress = await this.progressModel.find({ courseId: courseId }).skip((page - 1) * limit).limit(limit);
+      const progress = await this.progressModel.find({ courseId: courseId }).skip((paginationDto.page - 1) * paginationDto.limit).limit(paginationDto.limit);
       const total = await this.progressModel.countDocuments({ courseId: courseId });
-      const totalPages = Math.ceil(total / limit);
-      const currentPage = Math.max(1, Math.min(page, totalPages));
+      const totalPages = Math.ceil(total / paginationDto.limit);
+      const currentPage = Math.max(1, Math.min(paginationDto.page, totalPages));
       return {
         data: progress,
         total: total,
@@ -142,14 +144,14 @@ export class ProgressesService {
         currentPage: currentPage,
         hasNextPage: currentPage < totalPages,
         hasPreviousPage: currentPage > 1,
-        limit: limit,
+        limit: paginationDto.limit,
       };
     } catch (error) {
       throw new BadRequestException(error);
     }
   }
 
-  async getProgressByLessonId(lessonId: string, page: number = 1, limit: number = 10): Promise<{
+  async getProgressByLessonId(lessonId: string, paginationDto: PaginationDto): Promise<{
     data: ProgressDocument[];
     total: number;
     totalPages: number;
@@ -159,10 +161,10 @@ export class ProgressesService {
     limit: number;
   }> {
     try {
-      const progress = await this.progressModel.find({ lessonId: lessonId }).skip((page - 1) * limit).limit(limit);
+      const progress = await this.progressModel.find({ lessonId: lessonId }).skip((paginationDto.page - 1) * paginationDto.limit).limit(paginationDto.limit);
       const total = await this.progressModel.countDocuments({ lessonId: lessonId });
-      const totalPages = Math.ceil(total / limit);
-      const currentPage = Math.max(1, Math.min(page, totalPages));
+      const totalPages = Math.ceil(total / paginationDto.limit);
+      const currentPage = Math.max(1, Math.min(paginationDto.page, totalPages));
       return {
         data: progress,
         total: total,
@@ -170,14 +172,14 @@ export class ProgressesService {
         currentPage: currentPage,
         hasNextPage: currentPage < totalPages,
         hasPreviousPage: currentPage > 1,
-        limit: limit,
+        limit: paginationDto.limit,
       };
     } catch (error) {
       throw new BadRequestException(error);
     }
   }
 
-  async getProgressByAssignmentId(assignmentId: string, page: number = 1, limit: number = 10): Promise<{
+  async getProgressByAssignmentId(assignmentId: string, paginationDto: PaginationDto): Promise<{
     data: ProgressDocument[];
     total: number;
     totalPages: number;
@@ -187,10 +189,10 @@ export class ProgressesService {
     limit: number;
   }> {
     try {
-      const progress = await this.progressModel.find({ assignmentId: assignmentId }).skip((page - 1) * limit).limit(limit);
+      const progress = await this.progressModel.find({ assignmentId: assignmentId }).skip((paginationDto.page - 1) * paginationDto.limit).limit(paginationDto.limit);
       const total = await this.progressModel.countDocuments({ assignmentId: assignmentId });
-      const totalPages = Math.ceil(total / limit);
-      const currentPage = Math.max(1, Math.min(page, totalPages));
+      const totalPages = Math.ceil(total / paginationDto.limit);
+      const currentPage = Math.max(1, Math.min(paginationDto.page, totalPages));
       return {
         data: progress,
         total: total,
@@ -198,14 +200,14 @@ export class ProgressesService {
         currentPage: currentPage,
         hasNextPage: currentPage < totalPages,
         hasPreviousPage: currentPage > 1,
-        limit: limit,
+        limit: paginationDto.limit,
       };
     } catch (error) {
       throw new BadRequestException(error);
     }
   }
 
-  async getProgressByUserIdAndCourseId(userId: string, courseId: string, page: number = 1, limit: number = 10): Promise<{
+  async getProgressByUserIdAndCourseId(userId: string, courseId: string, paginationDto: PaginationDto): Promise<{
     data: ProgressDocument[];
     total: number;
     totalPages: number;
@@ -215,10 +217,10 @@ export class ProgressesService {
     limit: number;
   }> {
     try {
-      const progress = await this.progressModel.find({ userId: userId, courseId: courseId }).skip((page - 1) * limit).limit(limit);
+      const progress = await this.progressModel.find({ userId: userId, courseId: courseId }).skip((paginationDto.page - 1) * paginationDto.limit).limit(paginationDto.limit);
       const total = await this.progressModel.countDocuments({ userId: userId, courseId: courseId });
-      const totalPages = Math.ceil(total / limit);
-      const currentPage = Math.max(1, Math.min(page, totalPages));
+      const totalPages = Math.ceil(total / paginationDto.limit);
+      const currentPage = Math.max(1, Math.min(paginationDto.page, totalPages));
       return {
         data: progress,
         total: total,
@@ -226,14 +228,14 @@ export class ProgressesService {
         currentPage: currentPage,
         hasNextPage: currentPage < totalPages,
         hasPreviousPage: currentPage > 1,
-        limit: limit,
+        limit: paginationDto.limit,
       };
     } catch (error) {
       throw new BadRequestException(error);
     }
   }
 
-  async getAllProgress(page: number = 1, limit: number = 10): Promise<{
+  async getAllProgress(paginationDto: PaginationDto): Promise<{
     data: ProgressDocument[];
     total: number;
     totalPages: number;
@@ -243,10 +245,10 @@ export class ProgressesService {
     limit: number;
   }> {
     try {
-      const progress = await this.progressModel.find().skip((page - 1) * limit).limit(limit);
+      const progress = await this.progressModel.find().skip((paginationDto.page - 1) * paginationDto.limit).limit(paginationDto.limit);
       const total = await this.progressModel.countDocuments();
-      const totalPages = Math.ceil(total / limit);
-      const currentPage = Math.max(1, Math.min(page, totalPages));
+      const totalPages = Math.ceil(total / paginationDto.limit);
+      const currentPage = Math.max(1, Math.min(paginationDto.page, totalPages));
       return {
         data: progress,
         total: total,
@@ -254,7 +256,7 @@ export class ProgressesService {
         currentPage: currentPage,
         hasNextPage: currentPage < totalPages,
         hasPreviousPage: currentPage > 1,
-        limit: limit,
+        limit: paginationDto.limit,
       };
     } catch (error) {
       throw new BadRequestException(error);
