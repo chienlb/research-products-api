@@ -17,6 +17,7 @@ import { CreateUnitDto } from './dto/create-unit.dto';
 import { Body, Delete, Get, Patch } from '@nestjs/common';
 import { Post } from '@nestjs/common';
 import { UpdateUnitDto } from './dto/update-unit.dto';
+import { PaginationDto } from '../pagination/pagination.dto';
 
 @ApiTags('Units')
 @ApiBearerAuth()
@@ -86,8 +87,8 @@ export class UnitsController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden' })
   @ApiResponse({ status: 500, description: 'Internal server error' })
-  findAll(@Query('page') page?: number, @Query('limit') limit?: number) {
-    return this.unitsService.findAllUnits(page, limit);
+  findAll(@Query() paginationDto: PaginationDto) {
+    return this.unitsService.findAllUnits(paginationDto);
   }
 
   @Get(':id')

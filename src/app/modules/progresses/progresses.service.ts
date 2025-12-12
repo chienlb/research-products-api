@@ -13,6 +13,7 @@ import { AssignmentsService } from '../assignments/assignments.service';
 import { LessonsService } from '../lessons/lessons.service';
 import { UsersService } from '../users/users.service';
 import { PaginationDto } from '../pagination/pagination.dto';
+import { RedisService } from 'src/app/configs/redis/redis.service';
 
 @Injectable()
 export class ProgressesService {
@@ -21,6 +22,7 @@ export class ProgressesService {
     private readonly lessonsService: LessonsService,
     private readonly assignmentsService: AssignmentsService,
     private readonly usersService: UsersService,
+    private readonly redisService: RedisService,
   ) { }
 
   async createProgress(
@@ -125,6 +127,11 @@ export class ProgressesService {
     limit: number;
   }> {
     try {
+      const cacheKey = `progresses:user-id=${userId}:page=${paginationDto.page}:limit=${paginationDto.limit}:sort=${paginationDto.sort}:order=${paginationDto.order}`;
+      const cached = await this.redisService.get(cacheKey);
+      if (cached) {
+        return JSON.parse(cached);
+      }
       const progress = await this.progressModel
         .find({ userId: userId })
         .skip((paginationDto.page - 1) * paginationDto.limit)
@@ -133,7 +140,7 @@ export class ProgressesService {
       const total = await this.progressModel.countDocuments({ userId: userId });
       const totalPages = Math.ceil(total / paginationDto.limit);
       const currentPage = Math.max(1, Math.min(paginationDto.page, totalPages));
-      return {
+      const result = {
         data: progress,
         total: total,
         totalPages: totalPages,
@@ -142,6 +149,8 @@ export class ProgressesService {
         hasPreviousPage: currentPage > 1,
         limit: paginationDto.limit,
       };
+      await this.redisService.set(cacheKey, JSON.stringify(result), 60 * 5);
+      return result;
     } catch (error) {
       throw new BadRequestException(error);
     }
@@ -160,6 +169,11 @@ export class ProgressesService {
     limit: number;
   }> {
     try {
+      const cacheKey = `progresses:course-id=${courseId}:page=${paginationDto.page}:limit=${paginationDto.limit}:sort=${paginationDto.sort}:order=${paginationDto.order}`;
+      const cached = await this.redisService.get(cacheKey);
+      if (cached) {
+        return JSON.parse(cached);
+      }
       const progress = await this.progressModel
         .find({ courseId: courseId })
         .skip((paginationDto.page - 1) * paginationDto.limit)
@@ -169,7 +183,7 @@ export class ProgressesService {
       });
       const totalPages = Math.ceil(total / paginationDto.limit);
       const currentPage = Math.max(1, Math.min(paginationDto.page, totalPages));
-      return {
+      const result = {
         data: progress,
         total: total,
         totalPages: totalPages,
@@ -178,6 +192,8 @@ export class ProgressesService {
         hasPreviousPage: currentPage > 1,
         limit: paginationDto.limit,
       };
+      await this.redisService.set(cacheKey, JSON.stringify(result), 60 * 5);
+      return result;
     } catch (error) {
       throw new BadRequestException(error);
     }
@@ -196,6 +212,11 @@ export class ProgressesService {
     limit: number;
   }> {
     try {
+      const cacheKey = `progresses:lesson-id=${lessonId}:page=${paginationDto.page}:limit=${paginationDto.limit}:sort=${paginationDto.sort}:order=${paginationDto.order}`;
+      const cached = await this.redisService.get(cacheKey);
+      if (cached) {
+        return JSON.parse(cached);
+      }
       const progress = await this.progressModel
         .find({ lessonId: lessonId })
         .skip((paginationDto.page - 1) * paginationDto.limit)
@@ -205,7 +226,7 @@ export class ProgressesService {
       });
       const totalPages = Math.ceil(total / paginationDto.limit);
       const currentPage = Math.max(1, Math.min(paginationDto.page, totalPages));
-      return {
+      const result = {
         data: progress,
         total: total,
         totalPages: totalPages,
@@ -214,6 +235,8 @@ export class ProgressesService {
         hasPreviousPage: currentPage > 1,
         limit: paginationDto.limit,
       };
+      await this.redisService.set(cacheKey, JSON.stringify(result), 60 * 5);
+      return result;
     } catch (error) {
       throw new BadRequestException(error);
     }
@@ -232,6 +255,11 @@ export class ProgressesService {
     limit: number;
   }> {
     try {
+      const cacheKey = `progresses:assignment-id=${assignmentId}:page=${paginationDto.page}:limit=${paginationDto.limit}:sort=${paginationDto.sort}:order=${paginationDto.order}`;
+      const cached = await this.redisService.get(cacheKey);
+      if (cached) {
+        return JSON.parse(cached);
+      }
       const progress = await this.progressModel
         .find({ assignmentId: assignmentId })
         .skip((paginationDto.page - 1) * paginationDto.limit)
@@ -241,7 +269,7 @@ export class ProgressesService {
       });
       const totalPages = Math.ceil(total / paginationDto.limit);
       const currentPage = Math.max(1, Math.min(paginationDto.page, totalPages));
-      return {
+      const result = {
         data: progress,
         total: total,
         totalPages: totalPages,
@@ -250,6 +278,8 @@ export class ProgressesService {
         hasPreviousPage: currentPage > 1,
         limit: paginationDto.limit,
       };
+      await this.redisService.set(cacheKey, JSON.stringify(result), 60 * 5);
+      return result;
     } catch (error) {
       throw new BadRequestException(error);
     }
@@ -269,6 +299,11 @@ export class ProgressesService {
     limit: number;
   }> {
     try {
+      const cacheKey = `progresses:user-id=${userId}&course-id=${courseId}:page=${paginationDto.page}:limit=${paginationDto.limit}:sort=${paginationDto.sort}:order=${paginationDto.order}`;
+      const cached = await this.redisService.get(cacheKey);
+      if (cached) {
+        return JSON.parse(cached);
+      }
       const progress = await this.progressModel
         .find({ userId: userId, courseId: courseId })
         .skip((paginationDto.page - 1) * paginationDto.limit)
@@ -279,7 +314,7 @@ export class ProgressesService {
       });
       const totalPages = Math.ceil(total / paginationDto.limit);
       const currentPage = Math.max(1, Math.min(paginationDto.page, totalPages));
-      return {
+      const result = {
         data: progress,
         total: total,
         totalPages: totalPages,
@@ -288,6 +323,8 @@ export class ProgressesService {
         hasPreviousPage: currentPage > 1,
         limit: paginationDto.limit,
       };
+      await this.redisService.set(cacheKey, JSON.stringify(result), 60 * 5);
+      return result;
     } catch (error) {
       throw new BadRequestException(error);
     }
@@ -303,6 +340,11 @@ export class ProgressesService {
     limit: number;
   }> {
     try {
+      const cacheKey = `progresses:page=${paginationDto.page}:limit=${paginationDto.limit}:sort=${paginationDto.sort}:order=${paginationDto.order}`;
+      const cached = await this.redisService.get(cacheKey);
+      if (cached) {
+        return JSON.parse(cached);
+      }
       const progress = await this.progressModel
         .find()
         .skip((paginationDto.page - 1) * paginationDto.limit)
@@ -310,7 +352,7 @@ export class ProgressesService {
       const total = await this.progressModel.countDocuments();
       const totalPages = Math.ceil(total / paginationDto.limit);
       const currentPage = Math.max(1, Math.min(paginationDto.page, totalPages));
-      return {
+      const result = {
         data: progress,
         total: total,
         totalPages: totalPages,
@@ -319,6 +361,8 @@ export class ProgressesService {
         hasPreviousPage: currentPage > 1,
         limit: paginationDto.limit,
       };
+      await this.redisService.set(cacheKey, JSON.stringify(result), 60 * 5);
+      return result;
     } catch (error) {
       throw new BadRequestException(error);
     }

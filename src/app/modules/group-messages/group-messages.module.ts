@@ -8,6 +8,8 @@ import {
 } from './schema/group-message.schema';
 import { UsersModule } from '../users/users.module';
 import { GroupsModule } from '../groups/groups.module';
+import { RedisModule } from 'src/app/configs/redis/redis.module';
+import { RedisService } from 'src/app/configs/redis/redis.service';
 
 @Module({
   imports: [
@@ -16,9 +18,10 @@ import { GroupsModule } from '../groups/groups.module';
     ]),
     UsersModule,
     GroupsModule,
+    RedisModule,
   ],
   controllers: [GroupMessagesController],
-  providers: [GroupMessagesService],
+  providers: [GroupMessagesService, RedisService],
   exports: [GroupMessagesService],
 })
 export class GroupMessagesModule { }

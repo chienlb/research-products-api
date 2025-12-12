@@ -15,6 +15,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { AssignmentsService } from '../assignments/assignments.service';
 import { UsersService } from '../users/users.service';
+import { RedisService } from 'src/app/configs/redis/redis.service';
 
 @Injectable()
 export class SubmissionsService {
@@ -23,6 +24,7 @@ export class SubmissionsService {
     private submissionModel: Model<SubmissionDocument>,
     private assignmentsService: AssignmentsService,
     private usersService: UsersService,
+    private readonly redisService: RedisService,
   ) { }
 
   async createSubmission(
@@ -71,11 +73,20 @@ export class SubmissionsService {
 
   async getSubmissionById(id: string): Promise<SubmissionDocument> {
     try {
+      const cacheKey = `submission:id=${id}`;
+      const cached = await this.redisService.get(cacheKey);
+      if (cached) {
+        return JSON.parse(cached);
+      }
       const submission = await this.submissionModel.findById(id);
       if (!submission) {
         throw new NotFoundException('Submission not found');
       }
-      return submission;
+      const result = {
+        data: submission,
+      };
+      await this.redisService.set(cacheKey, JSON.stringify(result), 60 * 5);
+      return result.data;
     } catch (error) {
       throw new Error('Failed to get submission: ' + error.message);
     }
@@ -85,11 +96,20 @@ export class SubmissionsService {
     assignmentId: string,
   ): Promise<SubmissionDocument[]> {
     try {
+      const cacheKey = `submissions:assignment-id=${assignmentId}`;
+      const cached = await this.redisService.get(cacheKey);
+      if (cached) {
+        return JSON.parse(cached);
+      }
       const submissions = await this.submissionModel.find({ assignmentId });
       if (!submissions) {
         throw new NotFoundException('Submissions not found');
       }
-      return submissions;
+      const result = {
+        data: submissions,
+      };
+      await this.redisService.set(cacheKey, JSON.stringify(result), 60 * 5);
+      return result.data;
     } catch (error) {
       throw new Error('Failed to get submissions: ' + error.message);
     }
@@ -99,11 +119,20 @@ export class SubmissionsService {
     studentId: string,
   ): Promise<SubmissionDocument[]> {
     try {
+      const cacheKey = `submissions:student-id=${studentId}`;
+      const cached = await this.redisService.get(cacheKey);
+      if (cached) {
+        return JSON.parse(cached);
+      }
       const submissions = await this.submissionModel.find({ studentId });
       if (!submissions) {
         throw new NotFoundException('Submissions not found');
       }
-      return submissions;
+      const result = {
+        data: submissions,
+      };
+      await this.redisService.set(cacheKey, JSON.stringify(result), 60 * 5);
+      return result.data;
     } catch (error) {
       throw new Error('Failed to get submissions: ' + error.message);
     }

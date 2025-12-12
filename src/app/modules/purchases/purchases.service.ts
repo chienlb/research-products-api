@@ -13,6 +13,7 @@ import { PackagesService } from '../packages/packages.service';
 import { PaymentsService } from '../payments/payments.service';
 import { NotFoundException } from '@nestjs/common';
 import { PaginationDto } from '../pagination/pagination.dto';
+import { RedisService } from 'src/app/configs/redis/redis.service';
 
 @Injectable()
 export class PurchasesService {
@@ -22,6 +23,7 @@ export class PurchasesService {
     private usersService: UsersService,
     private packagesService: PackagesService,
     private paymentsService: PaymentsService,
+    private readonly redisService: RedisService,
   ) { }
 
   async createPurchase(
@@ -61,9 +63,7 @@ export class PurchasesService {
     }
   }
 
-  async findAllPurchases(
-    paginationDto: PaginationDto,
-  ): Promise<{
+  async findAllPurchases(paginationDto: PaginationDto): Promise<{
     data: PurchaseDocument[];
     total: number;
     totalPages: number;
@@ -71,6 +71,11 @@ export class PurchasesService {
     prevPage: number;
   }> {
     try {
+      const cacheKey = `purchases:page=${paginationDto.page}:limit=${paginationDto.limit}:sort=${paginationDto.sort}:order=${paginationDto.order}`;
+      const cached = await this.redisService.get(cacheKey);
+      if (cached) {
+        return JSON.parse(cached);
+      }
       const skip = (paginationDto.page - 1) * paginationDto.limit;
       const purchases = await this.purchaseRepository
         .find({ isActive: true })
@@ -78,17 +83,22 @@ export class PurchasesService {
         .limit(paginationDto.limit)
         .sort({ [paginationDto.sort]: paginationDto.order === 'asc' ? 1 : -1 })
         .exec();
-      const total = await this.purchaseRepository.countDocuments({ isActive: true });
+      const total = await this.purchaseRepository.countDocuments({
+        isActive: true,
+      });
       const totalPages = Math.ceil(total / paginationDto.limit);
-      const nextPage = paginationDto.page < totalPages ? paginationDto.page + 1 : null;
+      const nextPage =
+        paginationDto.page < totalPages ? paginationDto.page + 1 : null;
       const prevPage = paginationDto.page > 1 ? paginationDto.page - 1 : null;
-      return {
+      const result = {
         data: purchases,
         total,
         totalPages,
         nextPage: nextPage ?? paginationDto.page,
         prevPage: prevPage ?? paginationDto.page,
       };
+      await this.redisService.set(cacheKey, JSON.stringify(result), 60 * 5);
+      return result;
     } catch (error) {
       throw new Error(
         'Failed to find all purchases: ' + (error?.message || error),
@@ -98,8 +108,7 @@ export class PurchasesService {
 
   async findPurchasesByUserId(
     userId: string,
-    page: number,
-    limit: number,
+    paginationDto: PaginationDto,
   ): Promise<{
     data: PurchaseDocument[];
     total: number;
@@ -108,23 +117,32 @@ export class PurchasesService {
     prevPage: number;
   }> {
     try {
-      const skip = (page - 1) * limit;
+      const cacheKey = `purchases:user-id=${userId}:page=${paginationDto.page}:limit=${paginationDto.limit}:sort=${paginationDto.sort}:order=${paginationDto.order}`;
+      const cached = await this.redisService.get(cacheKey);
+      if (cached) {
+        return JSON.parse(cached);
+      }
+      const skip = (paginationDto.page - 1) * paginationDto.limit;
       const purchases = await this.purchaseRepository
         .find({ userId })
         .skip(skip)
-        .limit(limit)
+        .limit(paginationDto.limit)
+        .sort({ [paginationDto.sort]: paginationDto.order === 'asc' ? 1 : -1 })
         .exec();
       const total = await this.purchaseRepository.countDocuments({ userId });
-      const totalPages = Math.ceil(total / limit);
-      const nextPage = page < totalPages ? page + 1 : null;
-      const prevPage = page > 1 ? page - 1 : null;
-      return {
+      const totalPages = Math.ceil(total / paginationDto.limit);
+      const nextPage =
+        paginationDto.page < totalPages ? paginationDto.page + 1 : null;
+      const prevPage = paginationDto.page > 1 ? paginationDto.page - 1 : null;
+      const result = {
         data: purchases,
         total,
         totalPages,
-        nextPage: nextPage ?? page,
-        prevPage: prevPage ?? page,
+        nextPage: nextPage ?? paginationDto.page,
+        prevPage: prevPage ?? paginationDto.page,
       };
+      await this.redisService.set(cacheKey, JSON.stringify(result), 60 * 5);
+      return result;
     } catch (error) {
       throw new Error(
         'Failed to find purchases by user id: ' + (error?.message || error),

@@ -42,6 +42,7 @@ import { ResetPasswordDto } from './dto/reset-password.dto';
 import { VerifyEmailDto } from './dto/verify-email.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResendVerificationEmailDto } from './dto/resend-verification-email.dto';
+import { RedisService } from 'src/app/configs/redis/redis.service';
 
 @Injectable()
 export class AuthsService {
@@ -66,6 +67,8 @@ export class AuthsService {
 
     @InjectConnection()
     private readonly connection: Connection,
+
+    private readonly redisService: RedisService,
   ) { }
 
   async register(registerAuthDto: RegisterAuthDto): Promise<Partial<User>> {

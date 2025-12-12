@@ -6,11 +6,13 @@ import { CreateSchoolDto } from './dto/create-school.dto';
 import { UpdateSchoolDto } from './dto/update-school.dto';
 import { NotFoundException } from '@nestjs/common';
 import { PaginationDto } from '../pagination/pagination.dto';
+import { RedisService } from 'src/app/configs/redis/redis.service';
 
 @Injectable()
 export class SchoolsService {
   constructor(
     @InjectModel(School.name) private schoolModel: Model<SchoolDocument>,
+    private readonly redisService: RedisService,
   ) { }
 
   async createSchool(
@@ -38,6 +40,11 @@ export class SchoolsService {
     nextPage: number;
     prevPage: number;
   }> {
+    const cacheKey = `schools:page=${paginationDto.page}:limit=${paginationDto.limit}:sort=${paginationDto.sort}:order=${paginationDto.order}`;
+    const cached = await this.redisService.get(cacheKey);
+    if (cached) {
+      return JSON.parse(cached);
+    }
     const skip = (paginationDto.page - 1) * paginationDto.limit;
     const schools = await this.schoolModel
       .find({ isActive: true })
@@ -50,21 +57,32 @@ export class SchoolsService {
     const nextPage =
       paginationDto.page < totalPages ? paginationDto.page + 1 : null;
     const prevPage = paginationDto.page > 1 ? paginationDto.page - 1 : null;
-    return {
+    const result = {
       data: schools,
       total,
       totalPages,
       nextPage: nextPage ?? paginationDto.page,
       prevPage: prevPage ?? paginationDto.page,
     };
+    await this.redisService.set(cacheKey, JSON.stringify(result), 60 * 5);
+    return result;
   }
 
   async findSchoolById(id: string): Promise<SchoolDocument> {
+    const cacheKey = `school:id=${id}`;
+    const cached = await this.redisService.get(cacheKey);
+    if (cached) {
+      return JSON.parse(cached);
+    }
     const school = await this.schoolModel.findOne({ schoolId: id });
     if (!school) {
       throw new NotFoundException('School not found');
     }
-    return school;
+    const result = {
+      data: school,
+    };
+    await this.redisService.set(cacheKey, JSON.stringify(result), 60 * 5);
+    return result.data;
   }
 
   async updateSchool(

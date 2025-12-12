@@ -6,6 +6,8 @@ import { Purchase, PurchaseSchema } from './schema/purchase.schema';
 import { PaymentsModule } from '../payments/payments.module';
 import { UsersModule } from '../users/users.module';
 import { PackagesModule } from '../packages/packages.module';
+import { RedisModule } from 'src/app/configs/redis/redis.module';
+import { RedisService } from 'src/app/configs/redis/redis.service';
 
 @Module({
   imports: [
@@ -14,10 +16,11 @@ import { PackagesModule } from '../packages/packages.module';
     ]),
     UsersModule,
     PackagesModule,
-    forwardRef(() => PaymentsModule)
+    forwardRef(() => PaymentsModule),
+    RedisModule,
   ],
   controllers: [PurchasesController],
-  providers: [PurchasesService],
+  providers: [PurchasesService, RedisService],
   exports: [PurchasesService, MongooseModule],
 })
 export class PurchasesModule { }

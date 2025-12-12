@@ -9,12 +9,16 @@ import { Unit, UnitDocument, UnitStatus } from './schema/unit.schema';
 import { ClientSession, Model } from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
 import { UsersService } from '../users/users.service';
+import { PaginationDto } from '../pagination/pagination.dto';
+import { RedisService } from 'src/app/configs/redis/redis.service';
+
 
 @Injectable()
 export class UnitsService {
   constructor(
     @InjectModel(Unit.name) private readonly unitModel: Model<UnitDocument>,
     private readonly usersService: UsersService,
+    private readonly redisService: RedisService,
   ) { }
   async createUnit(createUnitDto: CreateUnitDto, session?: ClientSession) {
     try {
@@ -42,28 +46,42 @@ export class UnitsService {
     }
   }
 
-  async findAllUnits(page?: number, limit?: number, session?: ClientSession) {
+  async findAllUnits(paginationDto: PaginationDto, session?: ClientSession) {
     try {
+      const cacheKey = `units:page=${paginationDto.page}:limit=${paginationDto.limit}:sort=${paginationDto.sort}:order=${paginationDto.order}`;
+      const cached = await this.redisService.get(cacheKey);
+      if (cached) {
+        return JSON.parse(cached);
+      }
       const units = await this.unitModel
         .find({ isActive: UnitStatus.ACTIVE })
-        .skip((page || 1) - 1 * (limit || 10))
-        .limit(limit || 10)
+        .skip((paginationDto.page - 1) * paginationDto.limit)
+        .limit(paginationDto.limit)
         .session(session || null);
-      return {
+      const result = {
         data: units,
-        page: page || 1,
-        limit: limit || 10,
-        totalPages: Math.ceil(units.length / (limit || 10)),
-        nextPage: page ? page + 1 : 2,
-        prevPage: page ? page - 1 : 1,
+        page: paginationDto.page,
+        limit: paginationDto.limit,
+        total: units.length,
+        totalPages: Math.ceil(units.length / paginationDto.limit),
+        nextPage: paginationDto.page < Math.ceil(units.length / paginationDto.limit) ? paginationDto.page + 1 : null,
+        prevPage: paginationDto.page > 1 ? paginationDto.page - 1 : null,
       };
+      await this.redisService.set(cacheKey, JSON.stringify(result), 60 * 5);
+      return result;
     } catch (error) {
       throw new Error('Failed to find all units: ' + error.message);
     }
   }
 
   async findUnitById(id: string, session?: ClientSession) {
-    return await this.unitModel.findById(id).session(session || null);
+    const cacheKey = `unit:id=${id}`;
+    const cached = await this.redisService.get(cacheKey);
+    if (cached) {
+      return JSON.parse(cached);
+    }
+    const unit = await this.unitModel.findById(id).session(session || null);
+    return unit;
   }
 
   async updateUnitById(

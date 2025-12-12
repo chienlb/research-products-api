@@ -7,6 +7,7 @@ import { UsersService } from '../users/users.service';
 import { UpdateGroupDto } from './dto/update-group.dto';
 import { PackageType } from '../packages/schema/package.schema';
 import { PaginationDto } from '../pagination/pagination.dto';
+import { RedisService } from 'src/app/configs/redis/redis.service';
 
 @Injectable()
 export class GroupsService {
@@ -14,6 +15,7 @@ export class GroupsService {
     @InjectModel(Group.name)
     private groupRepository: Model<Group>,
     private usersService: UsersService,
+    private readonly redisService: RedisService,
   ) { }
 
   async createGroup(createGroupDto: CreateGroupDto): Promise<GroupDocument> {
@@ -108,6 +110,11 @@ export class GroupsService {
     prevPage: number;
   }> {
     try {
+      const cacheKey = `groups:page=${paginationDto.page}:limit=${paginationDto.limit}:sort=${paginationDto.sort}:order=${paginationDto.order}`;
+      const cached = await this.redisService.get(cacheKey);
+      if (cached) {
+        return JSON.parse(cached);
+      }
       const groups = await this.groupRepository
         .find({ isActive: true })
         .skip((paginationDto.page - 1) * paginationDto.limit)
@@ -117,13 +124,15 @@ export class GroupsService {
       const totalPages = Math.ceil(total / paginationDto.limit);
       const nextPage = paginationDto.page < totalPages ? paginationDto.page + 1 : null;
       const prevPage = paginationDto.page > 1 ? paginationDto.page - 1 : null;
-      return {
+      const result = {
         data: groups as GroupDocument[],
         total,
         totalPages,
         nextPage: nextPage ?? paginationDto.page,
         prevPage: prevPage ?? paginationDto.page,
       };
+      await this.redisService.set(cacheKey, JSON.stringify(result), 60 * 5);
+      return result;
     } catch (error) {
       throw new Error('Failed to find all groups: ' + error.message);
     }

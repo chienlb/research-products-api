@@ -5,6 +5,7 @@ import { ApiTags, ApiBearerAuth, ApiOperation, ApiBody, ApiResponse, ApiParam, A
 import { UserBadgeDocument } from './schema/user-badge.schema';
 import { UpdateUserBadgeDto } from './dto/update-user-badge.dto';
 import { ok } from 'assert';
+import { PaginationDto } from '../pagination/pagination.dto';
 
 @Controller('user-badges')
 @ApiTags('User Badges')
@@ -46,36 +47,9 @@ export class UserBadgesController {
   @ApiQuery({ name: 'limit', type: Number, description: 'The number of items per page', required: false })
   @ApiResponse({ status: 200, description: 'The user badges have been successfully retrieved.', type: [CreateUserBadgeDto] })
   @ApiResponse({ status: 400, description: 'Bad Request', type: BadRequestException })
-  async findAllUserBadges(@Query() query: any): Promise<{
-    userBadges: CreateUserBadgeDto[];
-    total: number;
-    totalPages: number;
-    currentPage: number;
-    hasNextPage: boolean;
-    hasPreviousPage: boolean;
-    nextPage: number | null;
-    previousPage: number | null;
-  }> {
-    const { userBadges, total, totalPages, currentPage, hasNextPage, hasPreviousPage, nextPage, previousPage } = await this.userBadgesService.findAllUserBadges(query.page, query.limit);
-    return {
-      userBadges: userBadges.map((userBadge) => ({
-        userId: userBadge.userId.toString(),
-        badgeId: userBadge.badgeId.toString(),
-        awardedAt: userBadge.awardedAt,
-        reason: userBadge.reason,
-        awardedBy: userBadge.awardedBy?.toString(),
-        isRevoked: userBadge.isRevoked,
-        revokedAt: userBadge.revokedAt,
-        note: userBadge.note,
-      })),
-      total,
-      totalPages,
-      currentPage,
-      hasNextPage,
-      hasPreviousPage,
-      nextPage,
-      previousPage,
-    };
+  async findAllUserBadges(@Query() paginationDto: PaginationDto) {
+    const result = await this.userBadgesService.findAllUserBadges(paginationDto);
+    return result;
   }
 
   @Put(':id')
@@ -133,35 +107,8 @@ export class UserBadgesController {
   @ApiQuery({ name: 'limit', type: Number, description: 'The number of items per page', required: false })
   @ApiResponse({ status: 200, description: 'The user badges have been successfully retrieved.', type: [CreateUserBadgeDto] })
   @ApiResponse({ status: 400, description: 'Bad Request', type: BadRequestException })
-  async findUserBadgesByUserId(@Param('userId') userId: string, @Query() query: any): Promise<{
-    userBadges: CreateUserBadgeDto[];
-    total: number;
-    totalPages: number;
-    currentPage: number;
-    hasNextPage: boolean;
-    hasPreviousPage: boolean;
-    nextPage: number | null;
-    previousPage: number | null;
-  }> {
-    const { userBadges, total, totalPages, currentPage, hasNextPage, hasPreviousPage, nextPage, previousPage } = await this.userBadgesService.findUserBadgesByUserId(userId, query.page, query.limit);
-    return {
-      userBadges: userBadges.map((userBadge) => ({
-        userId: userBadge.userId.toString(),
-        badgeId: userBadge.badgeId.toString(),
-        awardedAt: userBadge.awardedAt,
-        reason: userBadge.reason,
-        awardedBy: userBadge.awardedBy?.toString(),
-        isRevoked: userBadge.isRevoked,
-        revokedAt: userBadge.revokedAt,
-        note: userBadge.note,
-      })),
-      total,
-      totalPages,
-      currentPage,
-      hasNextPage,
-      hasPreviousPage,
-      nextPage,
-      previousPage,
-    };
+  async findUserBadgesByUserId(@Param('userId') userId: string, @Query() paginationDto: PaginationDto) {
+    const result = await this.userBadgesService.findUserBadgesByUserId(userId, paginationDto);
+    return result;
   }
 }

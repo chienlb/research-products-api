@@ -5,6 +5,8 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { Submission, SubmissionSchema } from './schema/submission.schema';
 import { AssignmentsModule } from '../assignments/assignments.module';
 import { UsersModule } from '../users/users.module';
+import { RedisModule } from 'src/app/configs/redis/redis.module';
+import { RedisService } from 'src/app/configs/redis/redis.service';
 
 @Module({
   imports: [
@@ -13,9 +15,10 @@ import { UsersModule } from '../users/users.module';
     ]),
     AssignmentsModule,
     UsersModule,
+    RedisModule,
   ],
   controllers: [SubmissionsController],
-  providers: [SubmissionsService],
+  providers: [SubmissionsService, RedisService],
   exports: [SubmissionsService, MongooseModule],
 })
 export class SubmissionsModule { }

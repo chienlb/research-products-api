@@ -5,6 +5,8 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { UserBadge, UserBadgeSchema } from './schema/user-badge.schema';
 import { UsersModule } from '../users/users.module';
 import { BadgesModule } from '../badges/badges.module';
+import { RedisModule } from 'src/app/configs/redis/redis.module';
+import { RedisService } from 'src/app/configs/redis/redis.service';
 
 @Module({
   imports: [
@@ -13,9 +15,10 @@ import { BadgesModule } from '../badges/badges.module';
     ]),
     UsersModule,
     BadgesModule,
+    RedisModule,
   ],
   controllers: [UserBadgesController],
-  providers: [UserBadgesService],
+  providers: [UserBadgesService, RedisService],
   exports: [UserBadgesService],
 })
 export class UserBadgesModule { }

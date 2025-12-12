@@ -7,6 +7,7 @@ import { UpdateLessonDto } from './dto/update-lesson.dto';
 import { UsersService } from '../users/users.service';
 import { UnitsService } from '../units/units.service';
 import { PaginationDto } from '../pagination/pagination.dto';
+import { RedisService } from 'src/app/configs/redis/redis.service';
 
 @Injectable()
 export class LessonsService {
@@ -14,6 +15,7 @@ export class LessonsService {
     @InjectModel(Lesson.name) private lessonModel: Model<LessonDocument>,
     private readonly usersService: UsersService,
     private readonly unitsService: UnitsService,
+    private readonly redisService: RedisService,
   ) { }
 
   async createLesson(
@@ -143,23 +145,47 @@ export class LessonsService {
     }
   }
 
-  async findAllLessons(paginationDto: PaginationDto): Promise<{ data: LessonDocument[], page: number, limit: number, total: number, totalPages: number, nextPage: number, prevPage: number }> {
+  async findAllLessons(
+    paginationDto: PaginationDto,
+  ): Promise<{
+    data: LessonDocument[];
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+    nextPage: number;
+    prevPage: number;
+  }> {
     try {
-      const lessons = await this.lessonModel.find({ isActive: LessonStatus.ACTIVE })
+      const cacheKey = `lessons:page=${paginationDto.page}:limit=${paginationDto.limit}:sort=${paginationDto.sort}:order=${paginationDto.order}`;
+      const cached = await this.redisService.get(cacheKey);
+      if (cached) {
+        return JSON.parse(cached);
+      }
+      const lessons = await this.lessonModel
+        .find({ isActive: LessonStatus.ACTIVE })
         .skip((paginationDto.page - 1) * paginationDto.limit)
         .limit(paginationDto.limit)
         .sort({ [paginationDto.sort]: paginationDto.order === 'asc' ? 1 : -1 })
         .exec();
-      const totalLessons = await this.lessonModel.countDocuments({ isActive: LessonStatus.ACTIVE });
-      return {
+      const totalLessons = await this.lessonModel.countDocuments({
+        isActive: LessonStatus.ACTIVE,
+      });
+      const result = {
         data: lessons as LessonDocument[],
         page: paginationDto.page,
         limit: paginationDto.limit,
         total: totalLessons,
         totalPages: Math.ceil(totalLessons / paginationDto.limit),
-        nextPage: paginationDto.page < Math.ceil(totalLessons / paginationDto.limit) ? paginationDto.page + 1 : paginationDto.page,
-        prevPage: paginationDto.page > 1 ? paginationDto.page - 1 : paginationDto.page,
+        nextPage:
+          paginationDto.page < Math.ceil(totalLessons / paginationDto.limit)
+            ? paginationDto.page + 1
+            : paginationDto.page,
+        prevPage:
+          paginationDto.page > 1 ? paginationDto.page - 1 : paginationDto.page,
       };
+      await this.redisService.set(cacheKey, JSON.stringify(result), 60 * 5);
+      return result;
     } catch (error) {
       throw new Error('Failed to find all lessons: ' + error.message);
     }

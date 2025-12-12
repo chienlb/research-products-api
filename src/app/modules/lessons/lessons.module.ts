@@ -5,6 +5,8 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { Lesson, LessonSchema } from './schema/lesson.schema';
 import { UsersModule } from '../users/users.module';
 import { UnitsModule } from '../units/units.module';
+import { RedisModule } from 'src/app/configs/redis/redis.module';
+import { RedisService } from 'src/app/configs/redis/redis.service';
 
 @Module({
   imports: [
@@ -13,9 +15,10 @@ import { UnitsModule } from '../units/units.module';
     ]),
     UsersModule,
     UnitsModule,
+    RedisModule,
   ],
   controllers: [LessonsController],
-  providers: [LessonsService],
+  providers: [LessonsService, RedisService],
   exports: [LessonsService, MongooseModule],
 })
 export class LessonsModule { }

@@ -5,6 +5,8 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { Support, SupportSchema } from './schema/support.schema';
 import { UsersModule } from '../users/users.module';
 import { CloudflareModule } from '../cloudflare/cloudflare.module';
+import { RedisModule } from 'src/app/configs/redis/redis.module';
+import { RedisService } from 'src/app/configs/redis/redis.service';
 
 @Module({
   imports: [
@@ -13,9 +15,10 @@ import { CloudflareModule } from '../cloudflare/cloudflare.module';
     ]),
     UsersModule,
     CloudflareModule,
+    RedisModule,
   ],
   controllers: [SupportsController],
-  providers: [SupportsService],
+  providers: [SupportsService, RedisService],
   exports: [SupportsService, MongooseModule],
 })
 export class SupportsModule { }

@@ -5,7 +5,8 @@ import { Unit, UnitSchema } from './schema/unit.schema';
 import { MongooseModule } from '@nestjs/mongoose';
 import { User, UserSchema } from '../users/schema/user.schema';
 import { UsersModule } from '../users/users.module';
-
+import { RedisModule } from 'src/app/configs/redis/redis.module';
+import { RedisService } from 'src/app/configs/redis/redis.service';
 
 @Module({
   imports: [
@@ -14,9 +15,10 @@ import { UsersModule } from '../users/users.module';
       { name: User.name, schema: UserSchema },
     ]),
     UsersModule,
+    RedisModule,
   ],
   controllers: [UnitsController],
-  providers: [UnitsService],
+  providers: [UnitsService, RedisService],
   exports: [UnitsService, MongooseModule],
 })
 export class UnitsModule { }

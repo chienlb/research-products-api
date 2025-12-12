@@ -5,6 +5,8 @@ import { UsersModule } from '../users/users.module';
 import { Package, PackageSchema } from './schema/package.schema';
 import { MongooseModule } from '@nestjs/mongoose';
 import { InvitationCodesModule } from '../invitation-codes/invitation-codes.module';
+import { RedisModule } from 'src/app/configs/redis/redis.module';
+import { RedisService } from 'src/app/configs/redis/redis.service';
 
 @Module({
   imports: [
@@ -13,9 +15,10 @@ import { InvitationCodesModule } from '../invitation-codes/invitation-codes.modu
     ]),
     forwardRef(() => UsersModule),
     forwardRef(() => InvitationCodesModule),
+    RedisModule,
   ],
   controllers: [PackagesController],
-  providers: [PackagesService],
+  providers: [PackagesService, RedisService],
   exports: [PackagesService],
 })
 export class PackagesModule { }

@@ -6,6 +6,7 @@ import { CreateLiteratureDto } from './dto/create-literature.dto';
 import { UpdateLiteratureDto } from './dto/update-literature.dto';
 import { UsersService } from '../users/users.service';
 import { PaginationDto } from '../pagination/pagination.dto';
+import { RedisService } from 'src/app/configs/redis/redis.service';
 
 @Injectable()
 export class LiteraturesService {
@@ -13,6 +14,7 @@ export class LiteraturesService {
     @InjectModel(Literature.name)
     private literatureModel: Model<LiteratureDocument>,
     private usersService: UsersService,
+    private readonly redisService: RedisService,
   ) { }
 
   async createLiterature(
@@ -55,6 +57,11 @@ export class LiteraturesService {
     prevPage: number | null;
   }> {
     try {
+      const cacheKey = `literatures:page=${paginationDto.page}:limit=${paginationDto.limit}:sort=${paginationDto.sort}:order=${paginationDto.order}`;
+      const cached = await this.redisService.get(cacheKey);
+      if (cached) {
+        return JSON.parse(cached);
+      }
       const literatures = await this.literatureModel
         .find({ isActive: true })
         .skip((paginationDto.page - 1) * paginationDto.limit)
@@ -67,7 +74,7 @@ export class LiteraturesService {
       const hasPreviousPage = currentPage > 1;
       const nextPage = paginationDto.page < totalPages ? paginationDto.page + 1 : null;
       const prevPage = paginationDto.page > 1 ? paginationDto.page - 1 : null;
-      return {
+      const result = {
         literatures,
         total,
         totalPages,
@@ -77,6 +84,8 @@ export class LiteraturesService {
         nextPage,
         prevPage,
       };
+      await this.redisService.set(cacheKey, JSON.stringify(result), 60 * 5);
+      return result;
     } catch (error) {
       throw new BadRequestException(error.message);
     }
@@ -84,11 +93,20 @@ export class LiteraturesService {
 
   async getLiteratureById(id: string): Promise<LiteratureDocument> {
     try {
+      const cacheKey = `literature:id=${id}`;
+      const cached = await this.redisService.get(cacheKey);
+      if (cached) {
+        return JSON.parse(cached);
+      }
       const literature = await this.literatureModel.findById(id);
       if (!literature) {
         throw new BadRequestException('Literature not found');
       }
-      return literature;
+      const result = {
+        data: literature,
+      };
+      await this.redisService.set(cacheKey, JSON.stringify(result), 60 * 5);
+      return result.data;
     } catch (error) {
       throw new BadRequestException(error.message);
     }

@@ -6,11 +6,13 @@ import { CreateDistrictDto } from './dto/create-district.dto';
 import { UpdateDistrictDto } from './dto/update-district.dto';
 import { NotFoundException } from '@nestjs/common';
 import { PaginationDto } from '../pagination/pagination.dto';
+import { RedisService } from 'src/app/configs/redis/redis.service';
 
 @Injectable()
 export class DistrictsService {
   constructor(
     @InjectModel(District.name) private districtModel: Model<DistrictDocument>,
+    private readonly redisService: RedisService,
   ) { }
 
   async createDistrict(
@@ -30,6 +32,11 @@ export class DistrictsService {
     prevPage: number;
   }> {
     const skip = (paginationDto.page - 1) * paginationDto.limit;
+    const cacheKey = `districts:page=${paginationDto.page}:limit=${paginationDto.limit}:sort=${paginationDto.sort}:order=${paginationDto.order}`;
+    const cached = await this.redisService.get(cacheKey);
+    if (cached) {
+      return JSON.parse(cached);
+    }
     const districts = await this.districtModel
       .find({ isActive: true })
       .skip(skip)
@@ -41,13 +48,15 @@ export class DistrictsService {
     const nextPage =
       paginationDto.page < totalPages ? paginationDto.page + 1 : null;
     const prevPage = paginationDto.page > 1 ? paginationDto.page - 1 : null;
-    return {
+    const result = {
       data: districts,
       total,
       totalPages,
       nextPage: nextPage ?? paginationDto.page,
       prevPage: prevPage ?? paginationDto.page,
     };
+    await this.redisService.set(cacheKey, JSON.stringify(result), 60 * 5);
+    return result;
   }
 
   async findDistrictById(id: string): Promise<DistrictDocument> {

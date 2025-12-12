@@ -5,12 +5,14 @@ import { Badge, BadgeDocument } from './schema/badge.schema';
 import { UsersService } from '../users/users.service';
 import { CreateBadgeDto } from './dto/create-badge.dto';
 import { UpdateBadgeDto } from './dto/update-badge.dto';
+import { RedisService } from 'src/app/configs/redis/redis.service';
 
 @Injectable()
 export class BadgesService {
   constructor(
     @InjectModel(Badge.name) private badgeModel: Model<BadgeDocument>,
     private usersService: UsersService,
+    private readonly redisService: RedisService,
   ) { }
 
   async createBadge(createBadgeDto: CreateBadgeDto): Promise<BadgeDocument> {
@@ -52,6 +54,11 @@ export class BadgesService {
     previousPage: number | null;
   }> {
     try {
+      const cacheKey = `badges:page=${page}:limit=${limit}`;
+      const cached = await this.redisService.get(cacheKey);
+      if (cached) {
+        return JSON.parse(cached);
+      }
       const skip = (page - 1) * limit;
       const badges = await this.badgeModel.find().skip(skip).limit(limit);
       const total = await this.badgeModel.countDocuments();
@@ -61,7 +68,7 @@ export class BadgesService {
       const hasPreviousPage = page > 1;
       const nextPage = hasNextPage ? page + 1 : null;
       const previousPage = hasPreviousPage ? page - 1 : null;
-      return {
+      const result = {
         badges,
         total,
         totalPages,
@@ -71,6 +78,8 @@ export class BadgesService {
         nextPage,
         previousPage,
       };
+      await this.redisService.set(cacheKey, JSON.stringify(result), 60 * 5);
+      return result;
     } catch (error) {
       throw new BadRequestException(error.message);
     }

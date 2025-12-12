@@ -11,6 +11,7 @@ import { UsersService } from '../users/users.service';
 import { PackagesService } from '../packages/packages.service';
 import { UpdateSubscriptionDto } from './dto/update-subscription.dto';
 import { PaginationDto } from '../pagination/pagination.dto';
+import { RedisService } from 'src/app/configs/redis/redis.service';
 
 @Injectable()
 export class SubscriptionsService {
@@ -19,6 +20,7 @@ export class SubscriptionsService {
     private subscriptionRepository: Model<SubscriptionDocument>,
     private usersService: UsersService,
     private packagesService: PackagesService,
+    private readonly redisService: RedisService,
   ) { }
 
   async createSubscription(
@@ -62,6 +64,11 @@ export class SubscriptionsService {
     prevPage: number;
   }> {
     try {
+      const cacheKey = `subscriptions:user-id=${userId}:page=${paginationDto.page}:limit=${paginationDto.limit}:sort=${paginationDto.sort}:order=${paginationDto.order}`;
+      const cached = await this.redisService.get(cacheKey);
+      if (cached) {
+        return JSON.parse(cached);
+      }
       const subscriptions = await this.subscriptionRepository
         .find({ userId })
         .skip((paginationDto.page - 1) * paginationDto.limit)
@@ -73,13 +80,15 @@ export class SubscriptionsService {
       const totalPages = Math.ceil(total / paginationDto.limit);
       const nextPage = paginationDto.page < totalPages ? paginationDto.page + 1 : null;
       const prevPage = paginationDto.page > 1 ? paginationDto.page - 1 : null;
-      return {
+      const result = {
         data: subscriptions as SubscriptionDocument[],
         total,
         totalPages,
         nextPage: nextPage ?? paginationDto.page,
         prevPage: prevPage ?? paginationDto.page,
       };
+      await this.redisService.set(cacheKey, JSON.stringify(result), 60 * 5);
+      return result;
     } catch (error) {
       throw new Error(
         'Failed to find subscription by user id: ' + (error?.message || error),
@@ -89,11 +98,20 @@ export class SubscriptionsService {
 
   async findSubscriptionById(id: string): Promise<SubscriptionDocument> {
     try {
+      const cacheKey = `subscription:id=${id}`;
+      const cached = await this.redisService.get(cacheKey);
+      if (cached) {
+        return JSON.parse(cached);
+      }
       const subscription = await this.subscriptionRepository.findById(id);
       if (!subscription) {
         throw new NotFoundException('Subscription not found');
       }
-      return subscription;
+      const result = {
+        data: subscription,
+      };
+      await this.redisService.set(cacheKey, JSON.stringify(result), 60 * 5);
+      return result.data;
     } catch (error) {
       throw new Error(
         'Failed to find subscription: ' + (error?.message || error),
@@ -150,6 +168,11 @@ export class SubscriptionsService {
     prevPage: number;
   }> {
     try {
+      const cacheKey = `subscriptions:page=${paginationDto.page}:limit=${paginationDto.limit}:sort=${paginationDto.sort}:order=${paginationDto.order}`;
+      const cached = await this.redisService.get(cacheKey);
+      if (cached) {
+        return JSON.parse(cached);
+      }
       const subscriptions = await this.subscriptionRepository
         .find({ isDeleted: false })
         .skip((paginationDto.page - 1) * paginationDto.limit)
@@ -160,13 +183,15 @@ export class SubscriptionsService {
       const totalPages = Math.ceil(total / paginationDto.limit);
       const nextPage = paginationDto.page < totalPages ? paginationDto.page + 1 : null;
       const prevPage = paginationDto.page > 1 ? paginationDto.page - 1 : null;
-      return {
+      const result = {
         data: subscriptions as SubscriptionDocument[],
         total,
         totalPages,
         nextPage: nextPage ?? paginationDto.page,
         prevPage: prevPage ?? paginationDto.page,
       };
+      await this.redisService.set(cacheKey, JSON.stringify(result), 60 * 5);
+      return result;
     } catch (error) {
       throw new Error(
         'Failed to find all subscriptions: ' + (error?.message || error),

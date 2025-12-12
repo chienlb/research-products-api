@@ -60,8 +60,8 @@ export class PurchasesController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden' })
   @ApiResponse({ status: 500, description: 'Internal Server Error' })
-  async getAllPurchasesByUserId(@Param('userId') userId: string, @Query('page') page: number, @Query('limit') limit: number) {
-    return this.purchasesService.findPurchasesByUserId(userId, page, limit);
+  async getAllPurchasesByUserId(@Param('userId') userId: string, @Query() paginationDto: PaginationDto) {
+    return this.purchasesService.findPurchasesByUserId(userId, paginationDto);
   }
 
   @Patch(':id')

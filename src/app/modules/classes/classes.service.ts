@@ -6,11 +6,13 @@ import { CreateClassDto } from './dto/create-class.dto';
 import { UpdateClassDto } from './dto/update-class.dto';
 import { NotFoundException } from '@nestjs/common';
 import { PaginationDto } from '../pagination/pagination.dto';
+import { RedisService } from 'src/app/configs/redis/redis.service';
 
 @Injectable()
 export class ClassesService {
   constructor(
     @InjectModel(Class.name) private classModel: Model<ClassDocument>,
+    private readonly redisService: RedisService,
   ) { }
 
   async createClass(createClassDto: CreateClassDto): Promise<ClassDocument> {
@@ -33,6 +35,11 @@ export class ClassesService {
     prevPage: number;
   }> {
     const skip = (paginationDto.page - 1) * paginationDto.limit;
+    const cacheKey = `classes:page=${paginationDto.page}:limit=${paginationDto.limit}:sort=${paginationDto.sort}:order=${paginationDto.order}`;
+    const cached = await this.redisService.get(cacheKey);
+    if (cached) {
+      return JSON.parse(cached);
+    }
     const classes = await this.classModel
       .find({ isActive: true })
       .skip(skip)
@@ -44,13 +51,15 @@ export class ClassesService {
     const nextPage =
       paginationDto.page < totalPages ? paginationDto.page + 1 : null;
     const prevPage = paginationDto.page > 1 ? paginationDto.page - 1 : null;
-    return {
+    const result = {
       data: classes,
       total,
       totalPages,
       nextPage: nextPage ?? paginationDto.page,
       prevPage: prevPage ?? paginationDto.page,
     };
+    await this.redisService.set(cacheKey, JSON.stringify(result), 60 * 5);
+    return result;
   }
 
   async findClassById(id: string): Promise<ClassDocument> {
