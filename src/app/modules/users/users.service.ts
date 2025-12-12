@@ -21,12 +21,15 @@ import { InvitationCodesService } from '../invitation-codes/invitation-codes.ser
 import { PackageType } from '../packages/schema/package.schema';
 import { PaginationDto } from '../pagination/pagination.dto';
 
+import { RedisService } from 'src/app/configs/redis/redis.service';
+
 @Injectable()
 export class UsersService {
   constructor(
     @InjectModel(User.name) private readonly userModel: Model<UserDocument>,
     @Inject(forwardRef(() => InvitationCodesService))
     private readonly invitationCodesService: InvitationCodesService,
+    private readonly redisService: RedisService,
   ) { }
   async create(createUserDto: CreateUserDto): Promise<UserDocument> {
     const session = await mongoose.startSession();
@@ -92,23 +95,50 @@ export class UsersService {
     page: number;
     limit: number;
   }> {
-    try {
-      const skip = (paginationDto.page - 1) * paginationDto.limit;
-      const users = await this.userModel
+    const { page, limit, sort, order } = paginationDto;
+
+    const cacheKey = `users:page=${page}:limit=${limit}:sort=${sort}:order=${order}`;
+
+    const cached = await this.redisService.get(cacheKey);
+    if (cached) {
+      return JSON.parse(cached);
+    }
+
+    const skip = (page - 1) * limit;
+
+    const [users, total] = await Promise.all([
+      this.userModel
         .find({ isDeleted: false })
         .skip(skip)
-        .limit(paginationDto.limit)
-        .sort({ [paginationDto.sort]: paginationDto.order === 'asc' ? 1 : -1 })
-        .session(session || null);
-      const total = await this.userModel.countDocuments({ isDeleted: false });
-      const totalPages = Math.ceil(total / paginationDto.limit);
-      const nextPage = paginationDto.page ? (paginationDto.page < totalPages ? paginationDto.page + 1 : null) : null;
-      const prevPage = paginationDto.page ? (paginationDto.page > 1 ? paginationDto.page - 1 : null) : null;
-      return { data: users as UserDocument[], total, totalPages, nextPage, prevPage, page: paginationDto.page, limit: paginationDto.limit };
-    } catch (error) {
-      throw new Error('Failed to find all users: ' + error.message);
-    }
+        .limit(limit)
+        .sort({ [sort]: order === 'asc' ? 1 : -1 })
+        .session(session || null)
+        .lean(),
+
+      this.userModel.countDocuments({ isDeleted: false }),
+    ]);
+
+    const totalPages = Math.ceil(total / limit);
+
+    const result = {
+      data: users as UserDocument[],
+      total,
+      totalPages,
+      nextPage: page < totalPages ? page + 1 : null,
+      prevPage: page > 1 ? page - 1 : null,
+      page,
+      limit,
+    };
+
+    await this.redisService.set(
+      cacheKey,
+      JSON.stringify(result),
+      60 * 5,
+    );
+
+    return result;
   }
+
 
   async findUserById(
     id: string,

@@ -28,7 +28,6 @@ import { SupportsModule } from './app/modules/supports/supports.module';
 import { ProgressesModule } from './app/modules/progresses/progresses.module';
 import { DiscussionsModule } from './app/modules/discussions/discussions.module';
 import { GroupMessagesModule } from './app/modules/group-messages/group-messages.module';
-import { RedisModule } from './app/configs/database/redis.config';
 import { MailModule } from './app/configs/mail/mail.module';
 
 import { ConfigModule } from '@nestjs/config';
@@ -36,10 +35,15 @@ import { AuthsModule } from './app/modules/auths/auths.module';
 import { MongoDBModule } from './app/configs/database/mongodb.config';
 import { CloudflareModule } from './app/modules/cloudflare/cloudflare.module';
 import { PurchasesModule } from './app/modules/purchases/purchases.module';
+import { RedisModule } from './app/configs/redis/redis.module';
 
 @Module({
   imports: [
     MongoDBModule,
+    ConfigModule.forRoot({
+      isGlobal: true,
+      envFilePath: `.env`,
+    }),
     MailModule,
     UsersModule,
     TokensModule,
@@ -68,18 +72,10 @@ import { PurchasesModule } from './app/modules/purchases/purchases.module';
     ProgressesModule,
     DiscussionsModule,
     GroupMessagesModule,
-    RedisModule,
-
-    ConfigModule.forRoot({
-      isGlobal: true,
-      envFilePath: `.env`,
-    }),
-
     AuthsModule,
-
     CloudflareModule,
-
     PurchasesModule,
+    RedisModule,
   ],
   controllers: [AppController],
   providers: [AppService],

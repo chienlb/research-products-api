@@ -19,6 +19,8 @@ import { Token, TokenSchema } from '../tokens/schema/token.schema';
 import { PassportModule } from '@nestjs/passport';
 import { GoogleStrategy } from './strategies/google.strategy';
 import { FacebookStrategy } from './strategies/facebook.strategy';
+import { RedisService } from 'src/app/configs/redis/redis.service';
+import { RedisModule } from 'src/app/configs/redis/redis.module';
 
 @Module({
   imports: [
@@ -30,12 +32,14 @@ import { FacebookStrategy } from './strategies/facebook.strategy';
     ]),
     PassportModule.register({ defaultStrategy: 'google', session: false }),
     PassportModule.register({ defaultStrategy: 'facebook', session: false }),
+    RedisModule,
   ],
   controllers: [AuthsController],
   providers: [
     AuthsService,
     InvitationCodesService,
     HistoryInvitationsService,
+    RedisService,
     UsersService,
     TokensService,
     GoogleStrategy,
