@@ -48,23 +48,11 @@ export class PaymentsController {
   @ApiResponse({ status: 403, description: 'Forbidden' })
   @ApiResponse({ status: 500, description: 'Internal server error' })
   async handleReturn(@Query() query: any, @Req() req: Request) {
-    let session: ClientSession | null = null;
     try {
-      session = await mongoose.startSession();
-      session.startTransaction();
-      const result = await this.paymentsService.handleReturn(query, session);
-      await session.commitTransaction();
-      await session.endSession();
+      const result = await this.paymentsService.handleReturn(query);
       return ok(result, 'Payment returned successfully');
     } catch (error) {
-      if (session) {
-        await session.abortTransaction();
-      }
       throw new BadRequestException(error.message);
-    } finally {
-      if (session) {
-        await session.endSession();
-      }
     }
   }
 
@@ -77,23 +65,11 @@ export class PaymentsController {
   @ApiResponse({ status: 403, description: 'Forbidden' })
   @ApiResponse({ status: 500, description: 'Internal server error' })
   async handleWebhook(@Query() query: any, @Req() req: Request) {
-    let session: ClientSession | null = null;
     try {
-      session = await mongoose.startSession();
-      session.startTransaction();
-      const result = await this.paymentsService.handleWebhook(query, session);
-      await session.commitTransaction();
-      await session.endSession();
+      const result = await this.paymentsService.handleWebhook(query);
       return ok(result, 'Payment webhook returned successfully');
     } catch (error) {
-      if (session) {
-        await session.abortTransaction();
-      }
       throw new BadRequestException(error.message);
-    } finally {
-      if (session) {
-        await session.endSession();
-      }
     }
   }
 }

@@ -108,21 +108,22 @@ export class AuthsService implements OnModuleInit {
   }
 
 
-  async register(registerAuthDto: RegisterAuthDto, session: ClientSession): Promise<Partial<User>> {
+  async register(
+    registerAuthDto: RegisterAuthDto,
+    session?: ClientSession,
+  ): Promise<Partial<User>> {
     if (this.connection.readyState !== 1) {
       throw new BadRequestException('Database not ready.');
     }
 
-    const mongooseSession = await this.connection.startSession();
-    if (!session) {
+    const mongooseSession = session ?? (await this.connection.startSession());
+    const isNewSession = !session;
+
+    if (isNewSession) {
       mongooseSession.startTransaction();
     }
 
-    let savedUser!: UserDocument;
-    let createInvitePayload: CreateInvitationCodeDto | null = null;
-
     try {
-      // 1. Check duplicate
       const existingUser = await this.userModel
         .findOne({
           $or: [
@@ -130,39 +131,14 @@ export class AuthsService implements OnModuleInit {
             { username: registerAuthDto.username },
           ],
         })
-        .session(session);
+        .session(mongooseSession);
 
       if (existingUser) {
         throw new ConflictException('Email or username already exists.');
       }
 
-      // 2. Validate logic
-      if (registerAuthDto.role === UserRole.STUDENT) {
-        const missing = [];
-
-        if (!registerAuthDto.inviteCode) {
-          if (!registerAuthDto.school) (missing as string[]).push('school');
-          if (!registerAuthDto.className)
-            (missing as string[]).push('className');
-          if (!registerAuthDto.teacher) (missing as string[]).push('teacher');
-          if (!registerAuthDto.parent) (missing as string[]).push('parent');
-        }
-
-        if (missing.length) {
-          throw new BadRequestException(
-            `Students must provide: ${missing.join(', ')} or enter an invitation code.`,
-          );
-        }
-      }
-
-      if (registerAuthDto.role === UserRole.TEACHER) {
-        if (!registerAuthDto.school) {
-          throw new BadRequestException('Teachers must select their school.');
-        }
-      }
-
-      // 3. Handle invite code (student only)
-      let invitedBy: string | null = null;
+      // invite code logic
+      let invitedBy: string | undefined;
 
       if (
         registerAuthDto.inviteCode &&
@@ -170,17 +146,19 @@ export class AuthsService implements OnModuleInit {
       ) {
         const inviter = await this.inviteCodeModel
           .findOne({ code: registerAuthDto.inviteCode })
-          .session(session);
+          .session(mongooseSession);
 
-        if (!inviter) throw new NotFoundException('Invalid invite code.');
+        if (!inviter) {
+          throw new NotFoundException('Invalid invite code.');
+        }
 
         const inviterUser = await this.userModel
           .findById(inviter.createdBy)
-          .session(session);
-        if (!inviterUser)
+          .session(mongooseSession);
+
+        if (!inviterUser) {
           throw new NotFoundException('Inviter does not exist.');
-        if (inviterUser.role === UserRole.STUDENT)
-          throw new BadRequestException('Students cannot invite.');
+        }
 
         invitedBy = inviter._id.toString();
 
@@ -191,96 +169,59 @@ export class AuthsService implements OnModuleInit {
             invitedAt: new Date().toISOString(),
             status: HistoryInvitationStatus.ACCEPTED,
           },
-          session,
+          mongooseSession,
         );
       }
 
-      // 4. Hash password
       const hashedPassword = await bcrypt.hash(registerAuthDto.password, 10);
 
-      // 5. Create user
-      const newUser = new this.userModel({
+      const user = new this.userModel({
         ...registerAuthDto,
         password: hashedPassword,
         status: UserStatus.ACTIVE,
         isVerify: false,
-        invitedBy: invitedBy || undefined,
+        invitedBy,
+        codeVerify: this.generateVerificationCode(),
       });
 
-      savedUser = await newUser.save({ session });
+      const savedUser = await user.save({ session: mongooseSession });
 
-      // Prepare auto invite code creation
-      if (
-        [UserRole.PARENT, UserRole.TEACHER, UserRole.ADMIN].includes(
-          savedUser.role as UserRole,
-        )
-      ) {
-        createInvitePayload = {
-          createdBy: savedUser._id.toString(),
-          event: 'Invitation code for student registration',
-          description: `Invitation code created by ${savedUser.username}`,
-          type: InvitationCodeType.GROUP_JOIN,
-          totalUses: 0,
-          usesLeft: 100,
-          startedAt: new Date().toISOString(),
-        };
+      if (isNewSession) {
+        await mongooseSession.commitTransaction();
+        mongooseSession.endSession();
       }
 
-      // 6. Email verify code
-      savedUser.codeVerify = this.generateVerificationCode();
-      await savedUser.save({ session });
-
-      // Commit transaction
-      await session.commitTransaction();
-      session.endSession();
-
-      // 7. Create invitation code AFTER COMMIT (NO SESSION)
-      if (createInvitePayload) {
-        const result =
-          await this.invitationCodesService.createInvitationCode(
-            createInvitePayload,
-          );
-        if (!result.data) {
-          throw new BadRequestException('Failed to create invitation code.');
-        }
-      }
-
-      // 8. Send verify email
-      const codeDigits = this.splitCodeToDigits(savedUser.codeVerify);
-
+      // AFTER COMMIT
       await verifyEmailQueue.add('verify-email', {
         email: savedUser.email,
-        codeDigits: codeDigits,
+        codeDigits: this.splitCodeToDigits(savedUser.codeVerify),
         fullname: savedUser.fullname,
         username: savedUser.username,
         year: new Date().getFullYear(),
-        telegramUrl: 'https://t.me/oteacher',
-        instagramUrl: 'https://instagram.com/oteacher',
-        twitterUrl: 'https://twitter.com/oteacher',
-        linkedinUrl: 'https://linkedin.com/company/oteacher',
       });
-
-      this.logger.log('Verify email job added:', savedUser.email);
 
       const obj = savedUser.toObject();
       delete (obj as any).password;
-
       return obj;
     } catch (error) {
-      await session.abortTransaction();
-      session.endSession();
-      this.logger.error('Registration failed:', error);
+      if (isNewSession) {
+        await mongooseSession.abortTransaction();
+        mongooseSession.endSession();
+      }
       throw error;
     }
   }
 
-  async login(loginAuthDto: LoginAuthDto, session: ClientSession) {
+
+  async login(loginAuthDto: LoginAuthDto, session?: ClientSession) {
     if (this.connection.readyState !== 1) {
       throw new BadRequestException('Database not ready.');
     }
 
-    const mongooseSession = await this.connection.startSession();
-    if (!session) {
+    const mongooseSession = session ?? (await this.connection.startSession());
+    const isNewSession = !session;
+
+    if (isNewSession) {
       mongooseSession.startTransaction();
     }
 
@@ -288,7 +229,7 @@ export class AuthsService implements OnModuleInit {
     try {
       const user = await this.userModel.findOne({
         $or: [{ email: loginAuthDto.email }, { username: loginAuthDto.email }],
-      }).session(session);
+      }).session(mongooseSession);
 
       if (!user) throw new NotFoundException('User not found.');
 
@@ -299,26 +240,23 @@ export class AuthsService implements OnModuleInit {
       const valid = await bcrypt.compare(loginAuthDto.password, user.password);
       if (!valid) throw new BadRequestException('Invalid password.');
 
-      const accessSecret = env.JWT_ACCESS_TOKEN_SECRET ?? 'access_token_secret';
-
-      const refreshSecret =
-        env.JWT_REFRESH_TOKEN_SECRET ?? 'refresh_token_secret';
-
-      const accessExpiresIn = env.JWT_ACCESS_TOKEN_EXPIRATION ?? '1h';
-
-      const refreshExpiresIn = env.JWT_REFRESH_TOKEN_EXPIRATION ?? '7d';
+      // Các giá trị này đã được validate qua envSchema, không cần fallback mặc định
+      const accessSecret = env.JWT_ACCESS_TOKEN_SECRET;
+      const refreshSecret = env.JWT_REFRESH_TOKEN_SECRET;
+      const accessExpiresIn = env.JWT_ACCESS_TOKEN_EXPIRATION;
+      const refreshExpiresIn = env.JWT_REFRESH_TOKEN_EXPIRATION;
 
       const accessToken = jwt.sign(
         { userId: user._id, role: user.role },
         accessSecret,
         { expiresIn: accessExpiresIn } as SignOptions,
-      )
+      );
 
       const refreshToken = jwt.sign(
         { userId: user._id, role: user.role },
         refreshSecret,
         { expiresIn: refreshExpiresIn } as SignOptions,
-      )
+      );
 
       // Tạo token nếu chưa tồn tại
       await this.tokenModel.findOneAndUpdate(
@@ -330,15 +268,25 @@ export class AuthsService implements OnModuleInit {
           $set: {
             token: accessToken,
             deviceId: loginAuthDto.deviceId,
-            typeDevice: loginAuthDto.typeDevice,
-            typeLogin: loginAuthDto.typeLogin,
           },
         },
         { upsert: true },
-      ).session(session);
+      ).session(mongooseSession);
 
       const obj = user.toObject();
       delete (obj as any).password;
+
+      if (isNewSession) {
+        await mongooseSession.commitTransaction();
+        await mongooseSession.endSession();
+      }
+
+      this.logger.log('Login successful:', {
+        email: user.email,
+        username: user.username,
+        role: user.role,
+        deviceId: loginAuthDto.deviceId,
+      });
 
       return {
         ...obj,
@@ -347,6 +295,10 @@ export class AuthsService implements OnModuleInit {
       };
     } catch (error) {
       this.logger.error('Login failed:', error);
+      if (isNewSession) {
+        await mongooseSession.abortTransaction();
+        await mongooseSession.endSession();
+      }
       throw error;
     }
 
@@ -407,7 +359,8 @@ export class AuthsService implements OnModuleInit {
       await user.save();
 
       const codeDigits = this.splitCodeToDigits(code);
-      sendEmail(user.email, 'Đặt lại mật khẩu HAPPY CAT', 'verify-email', {
+      // Gửi email quên mật khẩu với template riêng
+      sendEmail(user.email, 'Đặt lại mật khẩu HAPPY CAT', 'forgot-password', {
         ...codeDigits,
         username: user.fullname || user.username || 'Bạn',
         year: new Date().getFullYear(),
@@ -431,6 +384,17 @@ export class AuthsService implements OnModuleInit {
 
       user.password = await bcrypt.hash(resetPasswordDto.password, 10);
       await user.save();
+
+      // Gửi email thông báo đặt lại mật khẩu thành công
+      sendEmail(
+        user.email,
+        'Mật khẩu HAPPY CAT của bạn đã được thay đổi',
+        'reset-password',
+        {
+          username: user.fullname || user.username || 'Bạn',
+          year: new Date().getFullYear(),
+        },
+      ).catch((e) => this.logger.error('Email send error:', e));
     } catch (error) {
       this.logger.error('Reset password failed:', error);
       throw error;

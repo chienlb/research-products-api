@@ -59,12 +59,7 @@ export class AuthsController {
   @ApiResponse({ status: 201, description: 'User registered successfully' })
   @ApiResponse({ status: 400, description: 'Bad request' })
   async register(@Body() registerAuthDto: RegisterAuthDto) {
-    let session: ClientSession | null = null;
-
     try {
-      session = await mongoose.startSession();
-      session.startTransaction();
-
       const {
         fullname,
         username,
@@ -83,38 +78,24 @@ export class AuthsController {
         );
       }
 
-      const result = await this.authsService.register(
-        {
-          fullname,
-          username,
-          email,
-          password,
-          birthDate,
-          role,
-          phone,
-          gender,
-          typeAccount,
-        },
-        session,
-      );
-
-      await session.commitTransaction();
+      const result = await this.authsService.register({
+        fullname,
+        username,
+        email,
+        password,
+        birthDate,
+        role,
+        phone,
+        gender,
+        typeAccount,
+      });
 
       return ok(result, 'User registered successfully', 200);
     } catch (error) {
-      if (session) {
-        await session.abortTransaction();
-      }
-
       if (error instanceof HttpException) {
         throw error;
       }
-
       throw new BadRequestException(error.message);
-    } finally {
-      if (session) {
-        await session.endSession();
-      }
     }
   }
 
@@ -131,8 +112,6 @@ export class AuthsController {
           email: 'nguyenvana@example.com',
           password: '123456',
           deviceId: '1234567890',
-          typeDevice: 'android',
-          typeLogin: 'email',
         },
       },
     },
@@ -140,26 +119,14 @@ export class AuthsController {
   @ApiResponse({ status: 200, description: 'User logged in successfully' })
   @ApiResponse({ status: 400, description: 'Bad request' })
   async login(@Body() loginAuthDto: LoginAuthDto) {
-    let session: ClientSession | null = null;
     try {
-      session = await mongoose.startSession();
-      session.startTransaction();
-      const result = await this.authsService.login(loginAuthDto, session);
-      await session.commitTransaction();
-      await session.endSession();
+      const result = await this.authsService.login(loginAuthDto);
       return ok(result, 'User logged in successfully', 200);
     } catch (error) {
-      if (session) {
-        await session.abortTransaction();
-      }
       if (error instanceof HttpException) {
         throw error;
       }
       throw new BadRequestException(error.message);
-    } finally {
-      if (session) {
-        await session.endSession();
-      }
     }
   }
 

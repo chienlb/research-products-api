@@ -7,8 +7,6 @@ export interface IToken {
   userId: Types.ObjectId; // ID người dùng sở hữu token
   token: string; // Giá trị token đăng nhập
   deviceId: string; // ID thiết bị
-  typeDevice: string; // Loại thiết bị
-  typeLogin: string; // Loại đăng nhập
   isDeleted: boolean; // Trạng thái token đã bị xóa hay chưa
 }
 
@@ -33,12 +31,6 @@ export class Token implements IToken {
 
   @Prop({ required: true })
   deviceId: string;
-
-  @Prop({ required: true })
-  typeDevice: string;
-
-  @Prop({ required: true })
-  typeLogin: string;
 
   @Prop({ default: false })
   isDeleted: boolean;

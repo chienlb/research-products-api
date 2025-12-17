@@ -32,13 +32,15 @@ export class UsersService {
     private readonly redisService: RedisService,
     @InjectConnection() private readonly connection: Connection,
   ) { }
-  async createUser(createUserDto: CreateUserDto, session: ClientSession): Promise<UserDocument> {
+  async createUser(createUserDto: CreateUserDto, session?: ClientSession): Promise<UserDocument> {
     if (this.connection.readyState !== 1) {
       throw new BadRequestException('Database not ready.');
     }
 
-    const mongooseSession = await this.connection.startSession();
-    if (!session) {
+    const mongooseSession = session ?? (await this.connection.startSession());
+    const isNewSession = !session;
+
+    if (isNewSession) {
       mongooseSession.startTransaction();
     }
     try {
@@ -47,7 +49,7 @@ export class UsersService {
           { email: createUserDto.email },
           { username: createUserDto.username },
         ],
-      });
+      }).session(mongooseSession);
       if (existingUser) {
         throw new ConflictException('Email or username already exists');
       }
@@ -73,20 +75,30 @@ export class UsersService {
               usesLeft: 100,
               startedAt: new Date().toISOString(),
             },
-            session,
+            mongooseSession,
           );
         if (!invitationCode.data) {
           throw new BadRequestException('Failed to create invitation code');
         }
-        await mongooseSession.commitTransaction();
-        session.endSession();
+        if (isNewSession) {
+          await mongooseSession.commitTransaction();
+        }
         return newUser;
+      }
+
+      if (isNewSession) {
+        await mongooseSession.commitTransaction();
       }
       return newUser;
     } catch (error) {
-      await mongooseSession.abortTransaction();
-      mongooseSession.endSession();
+      if (isNewSession) {
+        await mongooseSession.abortTransaction();
+      }
       throw new Error('Failed to create user: ' + error.message);
+    } finally {
+      if (isNewSession) {
+        await mongooseSession.endSession();
+      }
     }
   }
 

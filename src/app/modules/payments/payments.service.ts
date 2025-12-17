@@ -117,13 +117,15 @@ export class PaymentsService {
       throw new BadRequestException('Database not ready.');
     }
 
-    const mongooseSession = await this.connection.startSession();
-    if (!session) {
+    const mongooseSession = session ?? (await this.connection.startSession());
+    const isNewSession = !session;
+
+    if (isNewSession) {
       mongooseSession.startTransaction();
     }
     try {
       // Find purchase
-      const purchase = await this.purchaseModel.findOne({ paymentId: transactionId });
+      const purchase = await this.purchaseModel.findOne({ paymentId: transactionId }).session(mongooseSession);
       if (!purchase) throw new NotFoundException('Purchase not found');
 
       // Update purchase status
@@ -133,13 +135,13 @@ export class PaymentsService {
       this.logger.log(`[DEBUG] Purchase updated status to SUCCESS for transaction ID: ${transactionId}`);
 
       // Find user
-      const user = await this.userModel.findById(purchase.userId);
+      const user = await this.userModel.findById(purchase.userId).session(mongooseSession);
       if (!user) throw new NotFoundException('User not found');
 
       const packagedId = purchase.packageId.toString();
       if (!packagedId) throw new NotFoundException('Package not found');
 
-      const packageResult = await this.packageModel.findById(packagedId);
+      const packageResult = await this.packageModel.findById(packagedId).session(mongooseSession);
       if (!packageResult) throw new NotFoundException('Package not found');
 
       // Set user package
@@ -150,7 +152,7 @@ export class PaymentsService {
       this.logger.log(`[DEBUG] User updated package to ${packageResult.type} for transaction ID: ${transactionId}`);
 
       // Subscription (optional)
-      const subscription = await this.subscriptionModel.findOne({ paymentId: transactionId });
+      const subscription = await this.subscriptionModel.findOne({ paymentId: transactionId }).session(mongooseSession);
       if (subscription) {
         subscription.status = SubscriptionStatus.ACTIVE;
         subscription.startDate = new Date();
@@ -158,22 +160,32 @@ export class PaymentsService {
         await subscription.save({ session: mongooseSession });
       }
 
+      if (isNewSession) {
+        await mongooseSession.commitTransaction();
+      }
       return { purchase, user, subscription };
     } catch (error) {
-      await mongooseSession.abortTransaction();
-      mongooseSession.endSession();
+      if (isNewSession) {
+        await mongooseSession.abortTransaction();
+      }
       throw new Error('Failed to activate services: ' + error.message);
+    } finally {
+      if (isNewSession) {
+        await mongooseSession.endSession();
+      }
     }
   }
 
 
-  async handleReturn(query: any, session: ClientSession) {
+  async handleReturn(query: any, session?: ClientSession) {
     if (this.connection.readyState !== 1) {
       throw new BadRequestException('Database not ready.');
     }
 
-    const mongooseSession = await this.connection.startSession();
-    if (!session) {
+    const mongooseSession = session ?? (await this.connection.startSession());
+    const isNewSession = !session;
+
+    if (isNewSession) {
       mongooseSession.startTransaction();
     }
     try {
@@ -186,31 +198,38 @@ export class PaymentsService {
       const success = query.vnp_ResponseCode === '00';
 
       if (success) {
-        await this.activateServices(query.vnp_TxnRef, session);
+        await this.activateServices(query.vnp_TxnRef, mongooseSession);
         this.logger.log(`[DEBUG] Purchase activated successfully for transaction ID: ${query.vnp_TxnRef}`);
       }
 
       const payment = await this.paymentModel.findOneAndUpdate(
         { transactionId: query.vnp_TxnRef },
         { status: success ? PaymentStatus.SUCCESS : PaymentStatus.FAILED, paidAt: new Date() },
-        { new: true },
+        { new: true, session: mongooseSession },
       );
 
       return { success, data: payment };
     } catch (error) {
-      await mongooseSession.abortTransaction();
-      mongooseSession.endSession();
+      if (isNewSession) {
+        await mongooseSession.abortTransaction();
+      }
       throw new Error('Failed to handle return: ' + error.message);
+    } finally {
+      if (isNewSession) {
+        await mongooseSession.endSession();
+      }
     }
   }
 
-  async handleWebhook(query: any, session: ClientSession) {
+  async handleWebhook(query: any, session?: ClientSession) {
     if (this.connection.readyState !== 1) {
       throw new BadRequestException('Database not ready.');
     }
 
-    const mongooseSession = await this.connection.startSession();
-    if (!session) {
+    const mongooseSession = session ?? (await this.connection.startSession());
+    const isNewSession = !session;
+
+    if (isNewSession) {
       mongooseSession.startTransaction();
     }
     try {
@@ -223,23 +242,23 @@ export class PaymentsService {
       const success = query.vnp_ResponseCode === '00';
 
       if (success) {
-        await this.activateServices(query.vnp_TxnRef, session);
+        await this.activateServices(query.vnp_TxnRef, mongooseSession);
         this.logger.log(`[DEBUG] Purchase activated successfully for transaction ID: ${query.vnp_TxnRef}`);
       }
 
       await this.paymentModel.findOneAndUpdate(
         { transactionId: query.vnp_TxnRef },
         { status: success ? PaymentStatus.SUCCESS : PaymentStatus.FAILED, paidAt: new Date() },
-      ).session(session);
+      ).session(mongooseSession);
 
       return { RspCode: '00', Message: 'Confirm Success' };
     } catch (error) {
-      await mongooseSession.abortTransaction();
-      mongooseSession.endSession();
+      if (isNewSession) {
+        await mongooseSession.abortTransaction();
+      }
       throw new Error('Failed to handle webhook: ' + error.message);
-    }
-    finally {
-      if (mongooseSession) {
+    } finally {
+      if (isNewSession) {
         await mongooseSession.endSession();
       }
     }

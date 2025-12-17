@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { ClientSession, Model } from 'mongoose';
 import { School, SchoolDocument } from './schema/school.schema';
 import { CreateSchoolDto } from './dto/create-school.dto';
 import { UpdateSchoolDto } from './dto/update-school.dto';
@@ -17,17 +17,32 @@ export class SchoolsService {
 
   async createSchool(
     createSchoolDto: CreateSchoolDto,
+    session?: ClientSession,
   ): Promise<SchoolDocument> {
-    const session = await this.schoolModel.startSession();
-    session.startTransaction();
+    const mongooseSession = session ?? (await this.schoolModel.startSession());
+    const isNewSession = !session;
+
+    if (isNewSession) {
+      await mongooseSession.startTransaction();
+    }
     try {
       const newSchool = new this.schoolModel(createSchoolDto);
-      await newSchool.save({ session });
+      await newSchool.save({ session: mongooseSession });
+
+      if (isNewSession) {
+        await mongooseSession.commitTransaction();
+      }
+
       return newSchool;
     } catch (error) {
-      await session.abortTransaction();
-      session.endSession();
+      if (isNewSession) {
+        await mongooseSession.abortTransaction();
+      }
       throw new Error('Failed to create school: ' + error.message);
+    } finally {
+      if (isNewSession) {
+        await mongooseSession.endSession();
+      }
     }
   }
 
@@ -88,9 +103,14 @@ export class SchoolsService {
   async updateSchool(
     id: string,
     updateSchoolDto: UpdateSchoolDto,
+    session?: ClientSession,
   ): Promise<SchoolDocument> {
-    const session = await this.schoolModel.startSession();
-    session.startTransaction();
+    const mongooseSession = session ?? (await this.schoolModel.startSession());
+    const isNewSession = !session;
+
+    if (isNewSession) {
+      await mongooseSession.startTransaction();
+    }
     try {
       const school = await this.findSchoolById(id);
       if (!school) {
@@ -99,23 +119,36 @@ export class SchoolsService {
       const updatedSchool = await this.schoolModel.findOneAndUpdate(
         { schoolId: id },
         updateSchoolDto,
-        { new: true, session },
+        { new: true, session: mongooseSession },
       );
 
       if (!updatedSchool) {
         throw new NotFoundException('School not found');
       }
+      if (isNewSession) {
+        await mongooseSession.commitTransaction();
+      }
+
       return updatedSchool;
     } catch (error) {
-      await session.abortTransaction();
-      session.endSession();
+      if (isNewSession) {
+        await mongooseSession.abortTransaction();
+      }
       throw new Error('Failed to update school: ' + error.message);
+    } finally {
+      if (isNewSession) {
+        await mongooseSession.endSession();
+      }
     }
   }
 
-  async deleteSchool(id: string): Promise<SchoolDocument> {
-    const session = await this.schoolModel.startSession();
-    session.startTransaction();
+  async deleteSchool(id: string, session?: ClientSession): Promise<SchoolDocument> {
+    const mongooseSession = session ?? (await this.schoolModel.startSession());
+    const isNewSession = !session;
+
+    if (isNewSession) {
+      await mongooseSession.startTransaction();
+    }
     try {
       const school = await this.findSchoolById(id);
       if (!school) {
@@ -123,16 +156,25 @@ export class SchoolsService {
       }
       const deletedSchool = await this.schoolModel.findOneAndDelete(
         { schoolId: id },
-        { session },
+        { session: mongooseSession },
       );
       if (!deletedSchool) {
         throw new NotFoundException('School not found');
       }
+      if (isNewSession) {
+        await mongooseSession.commitTransaction();
+      }
+
       return deletedSchool;
     } catch (error) {
-      await session.abortTransaction();
-      session.endSession();
+      if (isNewSession) {
+        await mongooseSession.abortTransaction();
+      }
       throw new Error('Failed to delete school: ' + error.message);
+    } finally {
+      if (isNewSession) {
+        await mongooseSession.endSession();
+      }
     }
   }
 }

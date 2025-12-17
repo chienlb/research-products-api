@@ -19,6 +19,7 @@ import { Token, TokenSchema } from '../tokens/schema/token.schema';
 import { PassportModule } from '@nestjs/passport';
 import { GoogleStrategy } from './strategies/google.strategy';
 import { FacebookStrategy } from './strategies/facebook.strategy';
+import { JwtStrategy } from './strategies/jwt.strategy';
 import { RedisService } from 'src/app/configs/redis/redis.service';
 import { RedisModule } from 'src/app/configs/redis/redis.module';
 
@@ -30,8 +31,8 @@ import { RedisModule } from 'src/app/configs/redis/redis.module';
       { name: HistoryInvitation.name, schema: HistoryInvitationSchema },
       { name: Token.name, schema: TokenSchema },
     ]),
-    PassportModule.register({ defaultStrategy: 'google', session: false }),
-    PassportModule.register({ defaultStrategy: 'facebook', session: false }),
+    // Dùng jwt làm default strategy, các strategy khác gọi theo tên
+    PassportModule.register({ defaultStrategy: 'jwt', session: false }),
     RedisModule,
   ],
   controllers: [AuthsController],
@@ -44,6 +45,7 @@ import { RedisModule } from 'src/app/configs/redis/redis.module';
     TokensService,
     GoogleStrategy,
     FacebookStrategy,
+    JwtStrategy,
   ],
 })
 export class AuthsModule { }

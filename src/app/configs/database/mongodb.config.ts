@@ -11,9 +11,10 @@ export const MongoDBModule = MongooseModule.forRootAsync({
     const uri = env.MONGODB_URI;
     return {
       uri,
-      serverSelectionTimeoutMS: 5000, // Fail after 5 seconds if server selection fails
-      socketTimeoutMS: 45000, // Close sockets after 45 seconds of inactivity
-      connectTimeoutMS: 10000, // Give up initial connection after 10 seconds
+      serverSelectionTimeoutMS: 30000,
+      // socketTimeoutMS: 60000,
+      connectTimeoutMS: 30000,
+      bufferTimeoutMS: 60000,
       connectionFactory: (connection: Connection) => {
         logger.log('Connecting to MongoDB...');
 

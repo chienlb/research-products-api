@@ -18,14 +18,6 @@ export class CreateTokenDto {
   @IsString()
   deviceId: string;
 
-  @IsNotEmpty()
-  @IsString()
-  typeDevice: string;
-
-  @IsNotEmpty()
-  @IsString()
-  typeLogin: string;
-
   @IsOptional()
   @IsBoolean()
   isDeleted?: boolean = false;

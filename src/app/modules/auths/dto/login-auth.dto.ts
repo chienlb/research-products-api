@@ -10,10 +10,4 @@ export class LoginAuthDto {
 
   @IsString()
   deviceId: string; // ID thiết bị
-
-  @IsString()
-  typeDevice: string; // Loại thiết bị
-
-  @IsString()
-  typeLogin: string; // Loại đăng nhập
 }

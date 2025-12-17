@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { ClientSession, Model } from 'mongoose';
 import { Lesson, LessonDocument, LessonStatus } from './schema/lesson.schema';
 import { CreateLessonDto } from './dto/create-lesson.dto';
 import { UpdateLessonDto } from './dto/update-lesson.dto';
@@ -20,9 +20,14 @@ export class LessonsService {
 
   async createLesson(
     createLessonDto: CreateLessonDto,
+    session?: ClientSession,
   ): Promise<LessonDocument> {
-    const session = await this.lessonModel.startSession();
-    session.startTransaction();
+    const mongooseSession = session ?? (await this.lessonModel.startSession());
+    const isNewSession = !session;
+
+    if (isNewSession) {
+      await mongooseSession.startTransaction();
+    }
     try {
       const user = await this.usersService.findUserById(
         createLessonDto.createdBy,
@@ -40,14 +45,24 @@ export class LessonsService {
         updatedBy: user._id,
         unit: unit._id,
       });
-      await newLesson.save({ session });
+      await newLesson.save({ session: mongooseSession });
       await unit.lessons.push(newLesson._id);
-      await unit.save({ session });
+      await unit.save({ session: mongooseSession });
+
+      if (isNewSession) {
+        await mongooseSession.commitTransaction();
+      }
+
       return newLesson;
     } catch (error) {
-      await session.abortTransaction();
-      session.endSession();
+      if (isNewSession) {
+        await mongooseSession.abortTransaction();
+      }
       throw new Error('Failed to create lesson: ' + error.message);
+    } finally {
+      if (isNewSession) {
+        await mongooseSession.endSession();
+      }
     }
   }
 
@@ -70,31 +85,49 @@ export class LessonsService {
   async updateLesson(
     id: string,
     updateLessonDto: UpdateLessonDto,
+    session?: ClientSession,
   ): Promise<LessonDocument> {
-    const session = await this.lessonModel.startSession();
-    session.startTransaction();
+    const mongooseSession = session ?? (await this.lessonModel.startSession());
+    const isNewSession = !session;
+
+    if (isNewSession) {
+      await mongooseSession.startTransaction();
+    }
     try {
       const lesson = await this.findLessonById(id);
       if (!lesson) {
         throw new NotFoundException('Lesson not found');
       }
       const updatedLesson = await this.lessonModel
-        .findByIdAndUpdate(id, updateLessonDto, { new: true, session })
+        .findByIdAndUpdate(id, updateLessonDto, { new: true, session: mongooseSession })
         .exec();
       if (!updatedLesson) {
         throw new NotFoundException('Lesson not found');
       }
+      if (isNewSession) {
+        await mongooseSession.commitTransaction();
+      }
+
       return updatedLesson;
     } catch (error) {
-      await session.abortTransaction();
-      session.endSession();
+      if (isNewSession) {
+        await mongooseSession.abortTransaction();
+      }
       throw new Error('Failed to update lesson: ' + error.message);
+    } finally {
+      if (isNewSession) {
+        await mongooseSession.endSession();
+      }
     }
   }
 
-  async deleteLesson(id: string): Promise<LessonDocument> {
-    const session = await this.lessonModel.startSession();
-    session.startTransaction();
+  async deleteLesson(id: string, session?: ClientSession): Promise<LessonDocument> {
+    const mongooseSession = session ?? (await this.lessonModel.startSession());
+    const isNewSession = !session;
+
+    if (isNewSession) {
+      await mongooseSession.startTransaction();
+    }
     try {
       const lesson = await this.findLessonById(id);
       if (!lesson) {
@@ -104,7 +137,7 @@ export class LessonsService {
       if (!unit) {
         throw new NotFoundException('Unit not found');
       }
-      await lesson.updateOne({ isActive: LessonStatus.INACTIVE }, { session });
+      await lesson.updateOne({ isActive: LessonStatus.INACTIVE }, { session: mongooseSession });
 
       const lessonIndex = unit.lessons.findIndex(
         (l) => l.toString() === lesson._id.toString(),
@@ -113,18 +146,32 @@ export class LessonsService {
         unit.lessons.splice(lessonIndex, 1);
       }
 
-      await unit.save({ session });
+      await unit.save({ session: mongooseSession });
+
+      if (isNewSession) {
+        await mongooseSession.commitTransaction();
+      }
+
       return lesson;
     } catch (error) {
-      await session.abortTransaction();
-      session.endSession();
+      if (isNewSession) {
+        await mongooseSession.abortTransaction();
+      }
       throw new Error('Failed to delete lesson: ' + error.message);
+    } finally {
+      if (isNewSession) {
+        await mongooseSession.endSession();
+      }
     }
   }
 
-  async restoreLesson(id: string): Promise<LessonDocument> {
-    const session = await this.lessonModel.startSession();
-    session.startTransaction();
+  async restoreLesson(id: string, session?: ClientSession): Promise<LessonDocument> {
+    const mongooseSession = session ?? (await this.lessonModel.startSession());
+    const isNewSession = !session;
+
+    if (isNewSession) {
+      await mongooseSession.startTransaction();
+    }
     try {
       const lesson = await this.findLessonById(id);
       if (!lesson) {
@@ -134,14 +181,24 @@ export class LessonsService {
       if (!unit) {
         throw new NotFoundException('Unit not found');
       }
-      await lesson.updateOne({ isActive: LessonStatus.ACTIVE }, { session });
+      await lesson.updateOne({ isActive: LessonStatus.ACTIVE }, { session: mongooseSession });
       await unit.lessons.push(lesson._id);
-      await unit.save({ session });
+      await unit.save({ session: mongooseSession });
+
+      if (isNewSession) {
+        await mongooseSession.commitTransaction();
+      }
+
       return lesson;
     } catch (error) {
-      await session.abortTransaction();
-      session.endSession();
+      if (isNewSession) {
+        await mongooseSession.abortTransaction();
+      }
       throw new Error('Failed to restore lesson: ' + error.message);
+    } finally {
+      if (isNewSession) {
+        await mongooseSession.endSession();
+      }
     }
   }
 

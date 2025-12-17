@@ -63,17 +63,12 @@ export class InvitationCodesController {
   @ApiResponse({ status: 403, description: 'Forbidden' })
   @ApiResponse({ status: 500, description: 'Internal Server Error' })
   async create(@Body() createInvitationCodeDto: CreateInvitationCodeDto) {
-    const session = await mongoose.startSession();
-    session.startTransaction();
     this.logger.log(
       `Creating invitation code by user: ${createInvitationCodeDto.createdBy}`,
     );
     const result = await this.invitationCodesService.createInvitationCode(
       createInvitationCodeDto,
-      session,
     );
-    await session.commitTransaction();
-    await session.endSession();
     return ok(result.data, 'Invitation code created successfully', 200);
   }
 

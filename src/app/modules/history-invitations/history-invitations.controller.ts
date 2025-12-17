@@ -44,17 +44,12 @@ export class HistoryInvitationsController {
   @ApiResponse({ status: 403, description: 'Forbidden' })
   @ApiResponse({ status: 500, description: 'Internal Server Error' })
   async create(@Body() createHistoryInvitationDto: CreateHistoryInvitationDto) {
-    const session = await mongoose.startSession();
-    session.startTransaction();
     this.logger.log(
       `Creating history invitation for user: ${createHistoryInvitationDto.userId}`,
     );
     const result = await this.historyInvitationsService.createHistoryInvitation(
       createHistoryInvitationDto,
-      session,
     );
-    await session.commitTransaction();
-    await session.endSession();
     return ok(result, 'History invitation created successfully', 200);
   }
 

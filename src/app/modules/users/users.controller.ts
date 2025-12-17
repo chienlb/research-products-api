@@ -56,23 +56,11 @@ export class UsersController {
   @ApiResponse({ status: 403, description: 'Forbidden' })
   @ApiResponse({ status: 500, description: 'Internal server error' })
   async create(@Body() createUserDto: CreateUserDto) {
-    let session: ClientSession | null = null;
     try {
-      session = await mongoose.startSession();
-      session.startTransaction();
-      const result = await this.usersService.createUser(createUserDto, session);
-      await session.commitTransaction();
-      await session.endSession();
+      const result = await this.usersService.createUser(createUserDto);
       return ok(result, 'User created successfully', 200);
     } catch (error) {
-      if (session) {
-        await session.abortTransaction();
-      }
       throw new BadRequestException(error.message);
-    } finally {
-      if (session) {
-        await session.endSession();
-      }
     }
   }
 
