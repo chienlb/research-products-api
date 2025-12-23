@@ -1,5 +1,13 @@
 // pronunciation.service.ts
-import { Injectable } from '@nestjs/common';
+import {
+  Injectable,
+  BadRequestException,
+  InternalServerErrorException,
+} from '@nestjs/common';
+
+import { envSchema } from 'src/app/configs/env/env.config';
+
+const env = envSchema.parse(process.env);
 
 type AssessInput = {
   audioBuffer: Buffer;
@@ -9,12 +17,15 @@ type AssessInput = {
 
 @Injectable()
 export class PronunciationService {
-  private readonly region = process.env.AZURE_SPEECH_REGION;
-  private readonly key = process.env.AZURE_SPEECH_KEY;
 
   async assessShortAudio(input: AssessInput) {
-    if (!this.region || !this.key) {
-      throw new Error('Missing AZURE_SPEECH_REGION / AZURE_SPEECH_KEY in env');
+    console.log('env');
+    console.log(env.AZURE_SPEECH_REGION);
+    console.log(env.AZURE_SPEECH_KEY);
+    if (!env.AZURE_SPEECH_REGION || !env.AZURE_SPEECH_KEY) {
+      throw new InternalServerErrorException(
+        'Missing AZURE_SPEECH_REGION / AZURE_SPEECH_KEY in env',
+      );
     }
 
     const { audioBuffer, referenceText, language } = input;
@@ -29,10 +40,13 @@ export class PronunciationService {
       EnableProsodyAssessment: 'True',   // prosody (stress/intonation/rhythm)
     };
 
+    console.log(env.AZURE_SPEECH_KEY);
+    console.log(env.AZURE_SPEECH_REGION);
+
     const pronHeader = Buffer.from(JSON.stringify(pronParams), 'utf8').toString('base64');
 
     const url =
-      `https://${this.region}.stt.speech.microsoft.com/speech/recognition/conversation/cognitiveservices/v1` +
+      `https://${env.AZURE_SPEECH_REGION}.stt.speech.microsoft.com/speech/recognition/conversation/cognitiveservices/v1` +
       `?language=${encodeURIComponent(language)}&format=detailed`;
 
     const res = await fetch(url, {
@@ -40,19 +54,36 @@ export class PronunciationService {
       headers: {
         Accept: 'application/json',
         'Content-Type': 'audio/wav; codecs=audio/pcm; samplerate=16000',
-        'Ocp-Apim-Subscription-Key': this.key,
+        'Ocp-Apim-Subscription-Key': env.AZURE_SPEECH_KEY,
         'Pronunciation-Assessment': pronHeader,
       },
-      body: audioBuffer.toString('base64'),
+      body: new Uint8Array(audioBuffer),
     });
 
     const bodyText = await res.text();
     if (!res.ok) {
       // In ra message rõ ràng để debug 401/403/400
-      throw new Error(`Azure Speech error ${res.status}: ${bodyText}`);
+      if (res.status === 400 || res.status === 401 || res.status === 403) {
+        throw new BadRequestException(
+          `Azure Speech API error ${res.status}: ${bodyText}`,
+        );
+      }
+      throw new InternalServerErrorException(
+        `Azure Speech API error ${res.status}: ${bodyText}`,
+      );
     }
 
-    const json = JSON.parse(bodyText);
+    let json;
+    try {
+      json = JSON.parse(bodyText);
+    } catch (parseError) {
+      const errorMessage =
+        parseError instanceof Error ? parseError.message : String(parseError);
+      throw new InternalServerErrorException(
+        `Failed to parse Azure Speech API response: ${errorMessage}`,
+      );
+    }
+
     const best = json?.NBest?.[0];
 
     return {
