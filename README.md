@@ -35,7 +35,7 @@ Backend cho nền tảng học tiếng Anh trực tuyến, xây dựng với Nes
 
 **SPNC API** cung cấp RESTful API cho nền tảng học tiếng Anh: quản lý người dùng, bài học, bài tập, nhóm, cuộc thi, thanh toán, thông báo và nhiều hơn nữa. Hỗ trợ JWT, OAuth2 (Google/Facebook), RBAC, rate limiting, caching và hệ thống email/templates đầy đủ.
 
-> Truy cập nhanh tài liệu API: `http://localhost:3000/docs` (Swagger)  
+> Truy cập nhanh tài liệu API: `http://localhost:3000/api-docs` (Swagger)  
 > Base URL mặc định: `http://localhost:3000/api/v1`
 
 ---
