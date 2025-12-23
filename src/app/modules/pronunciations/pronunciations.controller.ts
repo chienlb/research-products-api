@@ -3,9 +3,15 @@ import {
   Body,
   Controller,
   Post,
+  Query,
+  Req,
   UploadedFile,
   UseGuards,
   UseInterceptors,
+  Get,
+  Put,
+  Delete,
+  Param,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { PronunciationService } from './pronunciations.service';
@@ -16,16 +22,19 @@ import {
   ApiOperation,
   ApiBody,
   ApiResponse,
+  ApiQuery,
 } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { AssessPronunciationDto } from './dto/assess-pronunciation.dto';
+import { CreatePronunciationExerciseDto } from './dto/create-pronunciation-exercise.dto';
+import { UpdatePronunciationExerciseDto } from './dto/update-pronunciation-exercise.dto';
 
 @ApiTags('Pronunciation')
 @ApiBearerAuth()
 @UseGuards(AuthGuard('jwt'))
 @Controller('pronunciation')
 export class PronunciationController {
-  constructor(private readonly service: PronunciationService) {}
+  constructor(private readonly service: PronunciationService) { }
 
   @Post('assess')
   @UseInterceptors(FileInterceptor('audio'))
@@ -123,5 +132,130 @@ export class PronunciationController {
       referenceText: assessDto.referenceText.trim(),
       language: assessDto.language || 'en-US',
     });
+  }
+
+  @Post('create')
+  @ApiOperation({
+    summary: 'Create a new pronunciation exercise',
+    description: 'Create a new pronunciation exercise',
+  })
+  @ApiBody({
+    type: CreatePronunciationExerciseDto,
+    description: 'Create a new pronunciation exercise',
+    examples: {
+      example1: {
+        value: {
+          text: 'Hello',
+          ipa: 'həˈləʊ',
+          translation: 'Hello',
+          description: 'Hello',
+          referenceAudio: 'https://example.com/audio.wav',
+          referenceAudioDuration: 100,
+          lessonId: '1234567890',
+          unitId: '1234567890',
+          level: 'A1',
+          difficulty: 'easy',
+          topic: 'greetings',
+          tags: ['greetings', 'hello'],
+          minScore: 80,
+          maxAttempts: 3,
+          isActive: true,
+          orderIndex: 1,
+          createdBy: '1234567890',
+          updatedBy: '1234567890',
+        },
+      },
+    },
+  })
+  async create(@Body() createPronunciationExerciseDto: CreatePronunciationExerciseDto, @Req() req: any) {
+    return this.service.createPronunciationExercise(createPronunciationExerciseDto, req.user.userId);
+  }
+
+  @Get('get-all')
+  @ApiOperation({
+    summary: 'Get all pronunciation exercises',
+    description: 'Get all pronunciation exercises',
+  })
+  @ApiQuery({
+    name: 'lessonId',
+    type: String,
+    description: 'The id of the lesson',
+    example: '1234567890',
+  })
+  @ApiQuery({
+    name: 'unitId',
+    type: String,
+    description: 'The id of the unit',
+    example: '1234567890',
+  })
+  async getAll(@Query('lessonId') lessonId: string, @Query('unitId') unitId: string) {
+    return this.service.getPronunciationExercises(lessonId as string, unitId as string);
+  }
+
+  @Get('get-by-id')
+  @ApiOperation({
+    summary: 'Get a pronunciation exercise by id',
+    description: 'Get a pronunciation exercise by id',
+  })
+  @ApiQuery({
+    name: 'id',
+    type: String,
+    description: 'The id of the pronunciation exercise',
+    example: '1234567890',
+  })
+  async getById(@Query('id') id: string) {
+    return this.service.getPronunciationExerciseById(id as string);
+  }
+
+  @Put('update')
+  @ApiOperation({
+    summary: 'Update a pronunciation exercise',
+    description: 'Update a pronunciation exercise',
+  })
+  @ApiBody({
+    type: UpdatePronunciationExerciseDto,
+    description: 'Update a pronunciation exercise',
+    examples: {
+      example1: {
+        value: {
+          text: 'Hello',
+          ipa: 'həˈləʊ',
+          translation: 'Hello',
+          description: 'Hello',
+          referenceAudio: 'https://example.com/audio.wav',
+          referenceAudioDuration: 100,
+          lessonId: '1234567890',
+          unitId: '1234567890',
+          level: 'A1',
+          difficulty: 'easy',
+          topic: 'greetings',
+          tags: ['greetings', 'hello'],
+          minScore: 80,
+          maxAttempts: 3,
+          isActive: true,
+          orderIndex: 1,
+          createdBy: '1234567890',
+          updatedBy: '1234567890',
+        },
+      },
+    },
+  })
+  async update(@Param('id') id: string, @Body() updatePronunciationExerciseDto: UpdatePronunciationExerciseDto, @Req() req: any) {
+    return this.service.updatePronunciationExercise(id, updatePronunciationExerciseDto, req.user.userId);
+  }
+
+  @Delete('delete')
+  @ApiOperation({
+    summary: 'Delete a pronunciation exercise',
+    description: 'Delete a pronunciation exercise',
+  })
+  @ApiQuery({
+    name: 'id',
+    type: String,
+    description: 'The id of the pronunciation exercise',
+    example: '1234567890',
+  })
+  async delete(@Query('id') id: string) {
+    return this.service.deletePronunciationExercise(id as string);
   }
 }

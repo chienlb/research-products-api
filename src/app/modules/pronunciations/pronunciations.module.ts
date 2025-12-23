@@ -11,6 +11,9 @@ import {
   PronunciationAttemptSchema,
 } from './schema/pronunciation-attempt.schema';
 import { CloudflareModule } from '../cloudflare/cloudflare.module';
+import { UsersModule } from '../users/users.module';
+import { LessonsModule } from '../lessons/lessons.module';
+import { UnitsModule } from '../units/units.module';
 
 @Module({
   imports: [
@@ -19,6 +22,9 @@ import { CloudflareModule } from '../cloudflare/cloudflare.module';
       { name: PronunciationAttempt.name, schema: PronunciationAttemptSchema },
     ]),
     CloudflareModule,
+    UsersModule,
+    LessonsModule,
+    UnitsModule,
   ],
   controllers: [PronunciationController],
   providers: [PronunciationService],
