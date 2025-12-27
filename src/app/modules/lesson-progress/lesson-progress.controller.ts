@@ -1,23 +1,23 @@
 import { Body, Controller, Delete, Get, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
-import { LessonPrgressService } from './lesson-progress.service';
+import { LessonProgressService } from './lesson-progress.service';
 import { ApiTags, ApiOperation, ApiResponse, ApiQuery, ApiBody, ApiParam, ApiBearerAuth } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
-import { CreateLessonPrgressDto } from './dto/create-lesson-progress.dto';
-import { LessonPrgressDocument } from './schema/lesson-progress.schema';
-import { UpdateLessonPrgressDto } from './dto/update-lesson-progress.dto';
+import { LessonProgressDocument } from './schema/lesson-progress.schema';
+import { UpdateLessonProgressDto } from './dto/update-lesson-progress.dto';
 import { PaginationDto } from '../pagination/pagination.dto';
+import { CreateLessonProgressDto } from './dto/create-lesson-progress.dto';
 
 @Controller('lesson-prgress')
 @ApiTags('Lesson Prgress')
 @ApiBearerAuth()
 @UseGuards(AuthGuard('jwt'))
 export class LessonPrgressController {
-  constructor(private readonly lessonPrgressService: LessonPrgressService) { }
+  constructor(private readonly lessonProgressService: LessonProgressService) { }
 
   @Post()
   @ApiOperation({ summary: 'Create a new lesson prgress' })
   @ApiBody({
-    type: CreateLessonPrgressDto,
+    type: CreateLessonProgressDto,
     description: 'Create lesson prgress data',
     examples: {
       example: {
@@ -46,9 +46,9 @@ export class LessonPrgressController {
   })
   @ApiResponse({ status: 400, description: 'Bad request' })
   async createLessonPrgress(
-    @Body() createLessonPrgressDto: CreateLessonPrgressDto,
-  ): Promise<LessonPrgressDocument> {
-    return await this.lessonPrgressService.createLessonPrgress(createLessonPrgressDto);
+    @Body() createLessonProgressDto: CreateLessonProgressDto,
+  ): Promise<LessonProgressDocument> {
+    return await this.lessonProgressService.createLessonPrgress(createLessonProgressDto);
   }
 
   @Get('user/:userId')
@@ -98,7 +98,7 @@ export class LessonPrgressController {
     @Param('userId') userId: string,
     @Query() paginationDto: PaginationDto,
   ): Promise<{
-    data: LessonPrgressDocument[];
+    data: LessonProgressDocument[];
     total: number;
     totalPages: number;
     currentPage: number;
@@ -106,7 +106,7 @@ export class LessonPrgressController {
     hasPreviousPage: boolean;
     limit: number;
   }> {
-    return await this.lessonPrgressService.findLessonPrgressByUserId(userId, paginationDto);
+    return await this.lessonProgressService.findLessonPrgressByUserId(userId, paginationDto);
   }
 
   @Get('lesson/:lessonId')
@@ -156,7 +156,7 @@ export class LessonPrgressController {
     @Param('lessonId') lessonId: string,
     @Query() paginationDto: PaginationDto,
   ): Promise<{
-    data: LessonPrgressDocument[];
+    data: LessonProgressDocument[];
     total: number;
     totalPages: number;
     currentPage: number;
@@ -164,13 +164,13 @@ export class LessonPrgressController {
     hasPreviousPage: boolean;
     limit: number;
   }> {
-    return await this.lessonPrgressService.findLessonPrgressByLessonId(lessonId, paginationDto);
+    return await this.lessonProgressService.findLessonPrgressByLessonId(lessonId, paginationDto);
   }
 
   @Put(':lessonId')
   @ApiOperation({ summary: 'Update a lesson prgress' })
   @ApiBody({
-    type: UpdateLessonPrgressDto,
+    type: UpdateLessonProgressDto,
     description: 'Update lesson prgress data',
     examples: {
       example: {
@@ -198,9 +198,9 @@ export class LessonPrgressController {
   @ApiResponse({ status: 400, description: 'Bad request' })
   async updateLessonPrgress(
     @Param('lessonId') lessonId: string,
-    @Body() updateLessonPrgressDto: UpdateLessonPrgressDto,
-  ): Promise<LessonPrgressDocument> {
-    return await this.lessonPrgressService.updateLessonPrgress(lessonId, updateLessonPrgressDto);
+    @Body() updateLessonProgressDto: UpdateLessonProgressDto,
+  ): Promise<LessonProgressDocument> {
+    return await this.lessonProgressService.updateLessonPrgress(lessonId, updateLessonProgressDto);
   }
 
   @Delete(':lessonId')
@@ -213,6 +213,6 @@ export class LessonPrgressController {
   async deleteLessonPrgress(
     @Param('lessonId') lessonId: string,
   ): Promise<void> {
-    return await this.lessonPrgressService.deleteLessonPrgress(lessonId);
+    return await this.lessonProgressService.deleteLessonProgress(lessonId);
   }
 }

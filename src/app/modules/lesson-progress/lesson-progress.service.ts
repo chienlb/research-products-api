@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, Inject, NotFoundException, forwardRef } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import {
   LessonProgress,
@@ -20,7 +20,7 @@ export class LessonProgressService {
     @InjectModel(LessonProgress.name)
     private lessonProgressModel: Model<LessonProgressDocument>,
     private readonly usersService: UsersService,
-    private readonly lessonsService: LessonsService,
+    @Inject(forwardRef(() => LessonsService)) private readonly lessonsService: LessonsService,
     private readonly unitsService: UnitsService,
   ) { }
 

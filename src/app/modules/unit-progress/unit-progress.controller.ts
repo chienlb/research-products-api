@@ -1,34 +1,42 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Body, Controller, Param, Post, Query, UseGuards } from '@nestjs/common';
+import { ApiTags, ApiBearerAuth, ApiOperation, ApiResponse, ApiBody, ApiParam, ApiQuery } from '@nestjs/swagger';
+import { AuthGuard } from '@nestjs/passport';
 import { UnitProgressService } from './unit-progress.service';
+import { UnitProgressDocument } from './schema/unit-progress.schema';
 import { CreateUnitProgressDto } from './dto/create-unit-progress.dto';
-import { UpdateUnitProgressDto } from './dto/update-unit-progress.dto';
 
 @Controller('unit-progress')
+@ApiTags('Unit Progress')
+@ApiBearerAuth()
+@UseGuards(AuthGuard('jwt'))
 export class UnitProgressController {
-  constructor(private readonly unitProgressService: UnitProgressService) {}
+  constructor(private readonly unitProgressService: UnitProgressService) { }
 
   @Post()
-  create(@Body() createUnitProgressDto: CreateUnitProgressDto) {
-    return this.unitProgressService.create(createUnitProgressDto);
-  }
-
-  @Get()
-  findAll() {
-    return this.unitProgressService.findAll();
-  }
-
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.unitProgressService.findOne(+id);
-  }
-
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateUnitProgressDto: UpdateUnitProgressDto) {
-    return this.unitProgressService.update(+id, updateUnitProgressDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.unitProgressService.remove(+id);
+  @ApiOperation({ summary: 'Create a new unit progress' })
+  @ApiBody({
+    type: CreateUnitProgressDto,
+    description: 'Create unit progress data',
+    examples: {
+      example: {
+        value: {
+          userId: '123',
+          unitId: '123',
+          orderIndex: 1,
+          progress: 50,
+          status: 'completed',
+          completedAt: '2021-01-01',
+          createBy: '123',
+          updatedBy: '123',
+        },
+      },
+    },
+  })
+  @ApiResponse({ status: 201, description: 'Unit progress created successfully' })
+  @ApiResponse({ status: 400, description: 'Bad request' })
+  async createUnitProgress(
+    @Body() createUnitProgressDto: CreateUnitProgressDto,
+  ): Promise<UnitProgressDocument> {
+    return await this.unitProgressService.createUnitProgress(createUnitProgressDto);
   }
 }

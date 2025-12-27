@@ -37,7 +37,7 @@ import { CloudflareModule } from './app/modules/cloudflare/cloudflare.module';
 import { PurchasesModule } from './app/modules/purchases/purchases.module';
 import { RedisModule } from './app/configs/redis/redis.module';
 import { PronunciationsModule } from './app/modules/pronunciations/pronunciations.module';
-import { LessonPrgressModule } from './app/modules/lesson-prgress/lesson-prgress.module';
+import { LessonProgressModule } from './app/modules/lesson-progress/lesson-progress.module';
 import { UnitProgressModule } from './app/modules/unit-progress/unit-progress.module';
 
 @Module({
@@ -80,7 +80,7 @@ import { UnitProgressModule } from './app/modules/unit-progress/unit-progress.mo
     PurchasesModule,
     RedisModule,
     PronunciationsModule,
-    LessonPrgressModule,
+    LessonProgressModule,
     UnitProgressModule,
   ],
   controllers: [AppController],

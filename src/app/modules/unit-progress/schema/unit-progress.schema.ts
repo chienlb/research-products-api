@@ -47,3 +47,5 @@ export class UnitProgress implements IUnitProgress {
     @Prop({ type: Types.ObjectId, ref: 'User' })
     updatedBy: Types.ObjectId;
 }
+
+export const UnitProgressSchema = SchemaFactory.createForClass(UnitProgress);

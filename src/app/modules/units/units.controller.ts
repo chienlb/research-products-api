@@ -128,4 +128,16 @@ export class UnitsController {
   deleteById(@Param('id') id: string) {
     return this.unitsService.deleteUnitById(id);
   }
+
+  @Get('user/:userId')
+  @ApiOperation({ summary: 'Get a unit by user ID' })
+  @ApiParam({ name: 'userId', type: String, description: 'User ID' })
+  @ApiResponse({ status: 200, description: 'Unit fetched successfully' })
+  @ApiResponse({ status: 400, description: 'Bad request' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden' })
+  @ApiResponse({ status: 500, description: 'Internal server error' })
+  getUnitByUserId(@Param('userId') userId: string, @Query('orderIndex') orderIndex: number, @Query('unitId') unitId: string) {
+    return this.unitsService.getUnitByUserId(userId, orderIndex, unitId);
+  }
 }

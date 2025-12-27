@@ -1,19 +1,21 @@
-import { Module } from '@nestjs/common';
-import { LessonPrgressService } from './lesson-progress.service';
+import { Module, forwardRef } from '@nestjs/common';
+import { LessonProgressService } from './lesson-progress.service';
 import { LessonPrgressController } from './lesson-progress.controller';
 import { MongooseModule } from '@nestjs/mongoose';
-import { LessonPrgress, LessonPrgressSchema } from './schema/lesson-progress.schema';
+import { LessonProgress, LessonProgressSchema } from './schema/lesson-progress.schema';
 import { UsersModule } from '../users/users.module';
 import { LessonsModule } from '../lessons/lessons.module';
+import { UnitsModule } from '../units/units.module';
 
 @Module({
   imports: [
-    MongooseModule.forFeature([{ name: LessonPrgress.name, schema: LessonPrgressSchema }]),
+    MongooseModule.forFeature([{ name: LessonProgress.name, schema: LessonProgressSchema }]),
     UsersModule,
-    LessonsModule,
+    forwardRef(() => LessonsModule),
+    UnitsModule,
   ],
   controllers: [LessonPrgressController],
-  providers: [LessonPrgressService],
-  exports: [LessonPrgressService, MongooseModule],
+  providers: [LessonProgressService],
+  exports: [LessonProgressService, MongooseModule],
 })
-export class LessonPrgressModule { }
+export class LessonProgressModule { }

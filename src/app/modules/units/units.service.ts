@@ -1,7 +1,9 @@
 import {
   BadRequestException,
   Injectable,
+  Inject,
   NotFoundException,
+  forwardRef,
 } from '@nestjs/common';
 import { CreateUnitDto } from './dto/create-unit.dto';
 import { UpdateUnitDto } from './dto/update-unit.dto';
@@ -20,7 +22,7 @@ export class UnitsService {
     @InjectModel(Unit.name) private readonly unitModel: Model<UnitDocument>,
     private readonly usersService: UsersService,
     private readonly redisService: RedisService,
-    private readonly unitProgressService: UnitProgressService,
+    @Inject(forwardRef(() => UnitProgressService)) private readonly unitProgressService: UnitProgressService,
   ) { }
   async createUnit(createUnitDto: CreateUnitDto, session?: ClientSession) {
     try {
@@ -123,13 +125,13 @@ export class UnitsService {
     }
   }
 
-  async getUnitByUserId(userId: string, orderIndex: number, session?: ClientSession) {
+  async getUnitByUserId(userId: string, orderIndex: number, unitId: string, session?: ClientSession) {
     try {
       const user = await this.usersService.findUserById(userId);
       if (!user) {
         throw new NotFoundException('User not found');
       }
-      const unitProgress = await this.unitProgressService.findUnitByUserId(userId, orderIndex - 1);
+      const unitProgress = await this.unitProgressService.findUnitByUserId(userId, orderIndex - 1, unitId);
       if (!unitProgress) {
         throw new NotFoundException('Unit progress not found');
       }

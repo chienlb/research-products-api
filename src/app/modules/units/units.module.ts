@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { UnitsService } from './units.service';
 import { UnitsController } from './units.controller';
 import { Unit, UnitSchema } from './schema/unit.schema';
@@ -7,6 +7,7 @@ import { User, UserSchema } from '../users/schema/user.schema';
 import { UsersModule } from '../users/users.module';
 import { RedisModule } from 'src/app/configs/redis/redis.module';
 import { RedisService } from 'src/app/configs/redis/redis.service';
+import { UnitProgressModule } from '../unit-progress/unit-progress.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { RedisService } from 'src/app/configs/redis/redis.service';
     ]),
     UsersModule,
     RedisModule,
+    forwardRef(() => UnitProgressModule),
   ],
   controllers: [UnitsController],
   providers: [UnitsService, RedisService],
