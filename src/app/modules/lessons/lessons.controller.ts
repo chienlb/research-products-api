@@ -28,6 +28,7 @@ import {
   LessonLevel,
   LessonSkill,
   LessonType,
+  LessonActivityType,
 } from './schema/lesson.schema';
 import { PaginationDto } from '../pagination/pagination.dto';
 
@@ -54,17 +55,80 @@ export class LessonsController {
           type: LessonType.VOCABULARY,
           level: LessonLevel.A1,
           orderIndex: 1,
-          unit: 'unit-1',
+          unit: '669340000000000000000000',
           topic: 'Topic 1',
           skillFocus: LessonSkill.VOCABULARY,
-          content: {
-            vocabulary: {
-              words: ['word-1', 'word-2'],
-              definitions: ['definition-1', 'definition-2'],
-              images: ['image-1', 'image-2'],
-              audioFiles: ['audio-file-1', 'audio-file-2'],
+          lessonFlow: [
+            {
+              title: 'Warm-up Activity',
+              description: 'Introduction to the lesson',
+              duration: 5,
+              step: 1,
+              type: LessonActivityType.SONG,
+              skillFocus: LessonSkill.LISTENING,
+              content: {
+                vocabulary: {
+                  description: 'Basic greetings',
+                  words: [
+                    { word: 'hello', definition: 'xin chào', ipa: '/həˈloʊ/', image: 'hello.jpg', audio: 'hello.mp3' },
+                    { word: 'hi', definition: 'chào', ipa: '/haɪ/', image: 'hi.jpg', audio: 'hi.mp3' },
+                    { word: 'goodbye', definition: 'tạm biệt', ipa: '/ˌɡʊdˈbaɪ/', audio: 'goodbye.mp3' },
+                  ],
+                  tags: ['greetings', 'basic'],
+                },
+              },
             },
-          },
+            {
+              title: 'Grammar Practice',
+              description: 'Learn present simple tense',
+              duration: 15,
+              step: 2,
+              type: LessonActivityType.EXERCISE,
+              skillFocus: LessonSkill.GRAMMAR,
+              content: {
+                grammar: {
+                  description: 'Present simple tense rules',
+                  rule: 'Subject + Verb (s/es) + Object',
+                  examples: [
+                    { example: 'I play football.', translation: 'Tôi chơi bóng đá.' },
+                    { example: 'She reads books.', translation: 'Cô ấy đọc sách.' },
+                    { example: 'They go to school.', translation: 'Họ đi học.' },
+                  ],
+                  tags: ['grammar', 'tenses'],
+                },
+              },
+            },
+            {
+              title: 'Song Activity',
+              description: 'Learn through song',
+              duration: 10,
+              step: 3,
+              type: LessonActivityType.SONG,
+              skillFocus: LessonSkill.LISTENING,
+              content: {
+                songs: [
+                  {
+                    description: 'Greetings song',
+                    lyrics: 'Hello, hello, how are you?',
+                    translation: 'Xin chào, xin chào, bạn khỏe không?',
+                    audio: 'greetings-song.mp3',
+                    video: 'greetings-song.mp4',
+                    vocabulary: [
+                      { word: 'hello', definition: 'xin chào', ipa: '/həˈloʊ/' },
+                      { word: 'how', definition: 'như thế nào', ipa: '/haʊ/' },
+                    ],
+                    questionsAndAnswers: [
+                      {
+                        question: 'What is the song about?',
+                        answer: 'Greetings',
+                      },
+                    ],
+                    tags: ['song', 'greetings'],
+                  },
+                ],
+              },
+            },
+          ],
           locked: false,
           estimatedDuration: 10,
           materials: ['material-1', 'material-2'],

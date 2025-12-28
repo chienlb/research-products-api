@@ -1,6 +1,6 @@
-import { Injectable, Inject, NotFoundException, forwardRef } from '@nestjs/common';
+import { Injectable, Inject, NotFoundException, InternalServerErrorException, forwardRef, BadRequestException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { ClientSession, Model } from 'mongoose';
+import { ClientSession, Model, Types } from 'mongoose';
 import { Lesson, LessonDocument, LessonStatus } from './schema/lesson.schema';
 import { CreateLessonDto } from './dto/create-lesson.dto';
 import { UpdateLessonDto } from './dto/update-lesson.dto';
@@ -60,7 +60,10 @@ export class LessonsService {
       if (isNewSession) {
         await mongooseSession.abortTransaction();
       }
-      throw new Error('Failed to create lesson: ' + error.message);
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      throw new InternalServerErrorException('Failed to create lesson: ' + error.message);
     } finally {
       if (isNewSession) {
         await mongooseSession.endSession();
@@ -68,20 +71,61 @@ export class LessonsService {
     }
   }
 
-  async findLessonById(id: string): Promise<LessonDocument> {
-    const lesson = await this.lessonModel.findById(id).exec();
-    if (!lesson) {
-      throw new NotFoundException('Lesson not found');
+  async findLessonById(id: string, session?: ClientSession): Promise<LessonDocument> {
+    try {
+      if (!Types.ObjectId.isValid(id)) {
+        throw new BadRequestException('Invalid lesson ID format');
+      }
+      const lesson = await this.lessonModel
+        .findById(id)
+        .session(session || null)
+        .exec();
+      if (!lesson) {
+        throw new NotFoundException('Lesson not found');
+      }
+      return lesson as LessonDocument;
+    } catch (error) {
+      if (error instanceof NotFoundException || error instanceof BadRequestException) {
+        throw error;
+      }
+      throw new InternalServerErrorException('Failed to find lesson by ID: ' + error.message);
     }
-    return lesson as LessonDocument;
   }
 
-  async findLessonsByUnitId(unitId: string): Promise<LessonDocument[]> {
-    return this.lessonModel.find({ unit: unitId }).exec();
+  async findLessonsByUnitId(unitId: string, session?: ClientSession): Promise<LessonDocument[]> {
+    try {
+      if (!Types.ObjectId.isValid(unitId)) {
+        throw new BadRequestException('Invalid unit ID format');
+      }
+      return this.lessonModel
+        .find({ unit: unitId, isActive: LessonStatus.ACTIVE })
+        .sort({ orderIndex: 1 })
+        .session(session || null)
+        .exec();
+    } catch (error) {
+      if (error instanceof BadRequestException) {
+        throw error;
+      }
+      throw new InternalServerErrorException('Failed to find lessons by unit ID: ' + error.message);
+    }
   }
 
-  async findLessonsByUserId(userId: string): Promise<LessonDocument[]> {
-    return this.lessonModel.find({ createdBy: userId }).exec();
+  async findLessonsByUserId(userId: string, session?: ClientSession): Promise<LessonDocument[]> {
+    try {
+      if (!Types.ObjectId.isValid(userId)) {
+        throw new BadRequestException('Invalid user ID format');
+      }
+      return this.lessonModel
+        .find({ createdBy: userId, isActive: LessonStatus.ACTIVE })
+        .sort({ createdAt: -1 })
+        .session(session || null)
+        .exec();
+    } catch (error) {
+      if (error instanceof BadRequestException) {
+        throw error;
+      }
+      throw new InternalServerErrorException('Failed to find lessons by user ID: ' + error.message);
+    }
   }
 
   async updateLesson(
@@ -96,16 +140,28 @@ export class LessonsService {
       await mongooseSession.startTransaction();
     }
     try {
-      const lesson = await this.findLessonById(id);
-      if (!lesson) {
-        throw new NotFoundException('Lesson not found');
+      const lesson = await this.findLessonById(id, mongooseSession);
+      
+      // Validate updatedBy if provided
+      if (updateLessonDto.updatedBy) {
+        const user = await this.usersService.findUserById(updateLessonDto.updatedBy);
+        if (!user) {
+          throw new NotFoundException('User not found');
+        }
       }
+
       const updatedLesson = await this.lessonModel
-        .findByIdAndUpdate(id, updateLessonDto, { new: true, session: mongooseSession })
+        .findByIdAndUpdate(
+          id,
+          updateLessonDto,
+          { new: true, runValidators: true, session: mongooseSession }
+        )
         .exec();
+      
       if (!updatedLesson) {
         throw new NotFoundException('Lesson not found');
       }
+      
       if (isNewSession) {
         await mongooseSession.commitTransaction();
       }
@@ -115,7 +171,10 @@ export class LessonsService {
       if (isNewSession) {
         await mongooseSession.abortTransaction();
       }
-      throw new Error('Failed to update lesson: ' + error.message);
+      if (error instanceof NotFoundException || error instanceof BadRequestException) {
+        throw error;
+      }
+      throw new InternalServerErrorException('Failed to update lesson: ' + error.message);
     } finally {
       if (isNewSession) {
         await mongooseSession.endSession();
@@ -131,10 +190,7 @@ export class LessonsService {
       await mongooseSession.startTransaction();
     }
     try {
-      const lesson = await this.findLessonById(id);
-      if (!lesson) {
-        throw new NotFoundException('Lesson not found');
-      }
+      const lesson = await this.findLessonById(id, mongooseSession);
       const unit = await this.unitsService.findUnitById(lesson.unit.toString());
       if (!unit) {
         throw new NotFoundException('Unit not found');
@@ -159,7 +215,10 @@ export class LessonsService {
       if (isNewSession) {
         await mongooseSession.abortTransaction();
       }
-      throw new Error('Failed to delete lesson: ' + error.message);
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      throw new InternalServerErrorException('Failed to delete lesson: ' + error.message);
     } finally {
       if (isNewSession) {
         await mongooseSession.endSession();
@@ -175,10 +234,7 @@ export class LessonsService {
       await mongooseSession.startTransaction();
     }
     try {
-      const lesson = await this.findLessonById(id);
-      if (!lesson) {
-        throw new NotFoundException('Lesson not found');
-      }
+      const lesson = await this.findLessonById(id, mongooseSession);
       const unit = await this.unitsService.findUnitById(lesson.unit.toString());
       if (!unit) {
         throw new NotFoundException('Unit not found');
@@ -196,7 +252,10 @@ export class LessonsService {
       if (isNewSession) {
         await mongooseSession.abortTransaction();
       }
-      throw new Error('Failed to restore lesson: ' + error.message);
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      throw new InternalServerErrorException('Failed to restore lesson: ' + error.message);
     } finally {
       if (isNewSession) {
         await mongooseSession.endSession();
@@ -246,39 +305,72 @@ export class LessonsService {
       await this.redisService.set(cacheKey, JSON.stringify(result), 60 * 5);
       return result;
     } catch (error) {
-      throw new Error('Failed to find all lessons: ' + error.message);
+      throw new InternalServerErrorException('Failed to find all lessons: ' + error.message);
     }
   }
 
-  async getLessonByOrderIndex(userId: string, orderIndex: number): Promise<LessonDocument> {
+  async getLessonByOrderIndex(orderIndex: number, unitId?: string): Promise<LessonDocument> {
     try {
-      const lesson = await this.lessonModel.findOne({ orderIndex: orderIndex }).exec();
+      const query: any = { orderIndex, isActive: LessonStatus.ACTIVE };
+      if (unitId) {
+        if (!Types.ObjectId.isValid(unitId)) {
+          throw new BadRequestException('Invalid unit ID format');
+        }
+        query.unit = unitId;
+      }
+      
+      const lesson = await this.lessonModel.findOne(query).exec();
       if (!lesson) {
         throw new NotFoundException('Lesson not found');
       }
       return lesson as LessonDocument;
     } catch (error) {
-      throw new Error('Failed to get lesson by order index: ' + error.message);
+      if (error instanceof NotFoundException || error instanceof BadRequestException) {
+        throw error;
+      }
+      throw new InternalServerErrorException('Failed to get lesson by order index: ' + error.message);
     }
   }
 
-  async getLessonByOrderIndexAndUnitId(userId: string, orderIndex: number, unitId: string): Promise<LessonDocument> {
+  async getLessonByOrderIndexAndUnitId(orderIndex: number, unitId: string, userId?: string): Promise<LessonDocument> {
     try {
+      if (!Types.ObjectId.isValid(unitId)) {
+        throw new BadRequestException('Invalid unit ID format');
+      }
+      
       const unit = await this.unitsService.findUnitById(unitId);
       if (!unit) {
         throw new NotFoundException('Unit not found');
       }
-      const lessonProgress = await this.lessonProgressService.getLessonByUserId(userId, unitId, orderIndex - 1);
-      if (!lessonProgress) {
-        throw new NotFoundException('Lesson progress not found');
+      
+      // Optional: Check lesson progress if userId provided
+      if (userId) {
+        if (!Types.ObjectId.isValid(userId)) {
+          throw new BadRequestException('Invalid user ID format');
+        }
+        const lessonProgress = await this.lessonProgressService.getLessonByUserId(userId, unitId, orderIndex - 1);
+        if (!lessonProgress) {
+          throw new NotFoundException('Lesson progress not found');
+        }
       }
-      const lesson = await this.lessonModel.findOne({ orderIndex: orderIndex, unit: unitId }).exec();
+      
+      const lesson = await this.lessonModel
+        .findOne({ 
+          orderIndex, 
+          unit: unitId, 
+          isActive: LessonStatus.ACTIVE 
+        })
+        .exec();
+      
       if (!lesson) {
         throw new NotFoundException('Lesson not found');
       }
       return lesson as LessonDocument;
     } catch (error) {
-      throw new Error('Failed to get lesson by order index and unit id: ' + error.message);
+      if (error instanceof NotFoundException || error instanceof BadRequestException) {
+        throw error;
+      }
+      throw new InternalServerErrorException('Failed to get lesson by order index and unit id: ' + error.message);
     }
   }
 }

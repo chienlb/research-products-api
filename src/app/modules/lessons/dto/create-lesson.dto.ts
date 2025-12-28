@@ -7,6 +7,8 @@ import {
     IsBoolean,
     IsArray,
     ValidateNested,
+    Min,
+    Max,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import {
@@ -14,39 +16,87 @@ import {
     LessonLevel,
     LessonSkill,
     LessonStatus,
+    LessonActivityType,
 } from '../schema/lesson.schema';
 
-class VocabularyContentDto {
-    @IsArray()
-    @IsString({ each: true })
-    words: string[];
+// Lesson Flow Content DTOs
+class QuestionAnswerDto {
+    @IsString()
+    question: string;
 
-    @IsOptional()
-    @IsArray()
-    @IsString({ each: true })
-    definitions?: string[];
-
-    @IsOptional()
-    @IsArray()
-    @IsString({ each: true })
-    images?: string[];
-
-    @IsOptional()
-    @IsArray()
-    @IsString({ each: true })
-    audioFiles?: string[];
+    @IsString()
+    answer: string;
 }
 
-class GrammarContentDto {
+class VocabularyWordDto {
+    @IsString()
+    word: string;
+
+    @IsString()
+    definition: string;
+
+    @IsOptional()
+    @IsString()
+    ipa?: string;
+
+    @IsOptional()
+    @IsString()
+    image?: string;
+
+    @IsOptional()
+    @IsString()
+    audio?: string;
+}
+
+class GrammarExampleDto {
+    @IsString()
+    example: string;
+
+    @IsOptional()
+    @IsString()
+    translation?: string;
+}
+
+class LessonFlowVocabularyDto {
+    @IsOptional()
+    @IsString()
+    description?: string;
+
+    @IsArray()
+    @ValidateNested({ each: true })
+    @Type(() => VocabularyWordDto)
+    words: VocabularyWordDto[];
+
+    @IsOptional()
+    @IsArray()
+    @IsString({ each: true })
+    tags?: string[];
+}
+
+class LessonFlowGrammarDto {
+    @IsOptional()
+    @IsString()
+    description?: string;
+
     @IsString()
     rule: string;
 
     @IsArray()
+    @ValidateNested({ each: true })
+    @Type(() => GrammarExampleDto)
+    examples: GrammarExampleDto[];
+
+    @IsOptional()
+    @IsArray()
     @IsString({ each: true })
-    examples: string[];
+    tags?: string[];
 }
 
-class DialogueContentDto {
+class LessonFlowDialogueDto {
+    @IsOptional()
+    @IsString()
+    description?: string;
+
     @IsString()
     script: string;
 
@@ -57,52 +107,251 @@ class DialogueContentDto {
     @IsOptional()
     @IsString()
     translation?: string;
+
+    @IsOptional()
+    @IsArray()
+    @IsString({ each: true })
+    tags?: string[];
 }
 
-class ReadingContentDto {
+class LessonFlowReadingDto {
+    @IsOptional()
+    @IsString()
+    description?: string;
+
     @IsString()
     passage: string;
 
     @IsOptional()
     @IsArray()
+    @ValidateNested({ each: true })
+    @Type(() => QuestionAnswerDto)
+    questionsAndAnswers?: QuestionAnswerDto[];
+
+    @IsOptional()
+    @IsArray()
     @IsString({ each: true })
-    questions?: string[];
+    tags?: string[];
 }
 
-class ExerciseItemDto {
+class LessonFlowExerciseDto {
+    @IsOptional()
+    @IsString()
+    description?: string;
+
     @IsString()
     type: string;
 
     @IsArray()
-    questions: any[];
+    @ValidateNested({ each: true })
+    @Type(() => QuestionAnswerDto)
+    questionsAndAnswers: QuestionAnswerDto[];
+
+    @IsOptional()
+    @IsArray()
+    @IsString({ each: true })
+    tags?: string[];
 }
 
-class ContentDto {
+class LessonFlowQuizDto {
     @IsOptional()
-    @ValidateNested()
-    @Type(() => VocabularyContentDto)
-    vocabulary?: VocabularyContentDto;
+    @IsString()
+    description?: string;
+
+    @IsArray()
+    @ValidateNested({ each: true })
+    @Type(() => QuestionAnswerDto)
+    questionsAndAnswers: QuestionAnswerDto[];
 
     @IsOptional()
-    @ValidateNested()
-    @Type(() => GrammarContentDto)
-    grammar?: GrammarContentDto;
+    @IsArray()
+    @IsString({ each: true })
+    tags?: string[];
+}
+
+class LessonFlowReviewDto {
+    @IsOptional()
+    @IsString()
+    description?: string;
+
+    @IsArray()
+    @ValidateNested({ each: true })
+    @Type(() => QuestionAnswerDto)
+    questionsAndAnswers: QuestionAnswerDto[];
 
     @IsOptional()
-    @ValidateNested()
-    @Type(() => DialogueContentDto)
-    dialogue?: DialogueContentDto;
+    @IsArray()
+    @IsString({ each: true })
+    tags?: string[];
+}
+
+class LessonFlowSummaryDto {
+    @IsOptional()
+    @IsString()
+    description?: string;
+
+    @IsArray()
+    @ValidateNested({ each: true })
+    @Type(() => QuestionAnswerDto)
+    questionsAndAnswers: QuestionAnswerDto[];
 
     @IsOptional()
-    @ValidateNested()
-    @Type(() => ReadingContentDto)
-    reading?: ReadingContentDto;
+    @IsArray()
+    @IsString({ each: true })
+    tags?: string[];
+}
+
+class LessonFlowGameDto {
+    @IsOptional()
+    @IsString()
+    description?: string;
+
+    @IsArray()
+    @ValidateNested({ each: true })
+    @Type(() => QuestionAnswerDto)
+    questionsAndAnswers: QuestionAnswerDto[];
+
+    @IsOptional()
+    @IsArray()
+    @IsString({ each: true })
+    tags?: string[];
+}
+
+class SongVocabularyWordDto {
+    @IsString()
+    word: string;
+
+    @IsString()
+    definition: string;
+
+    @IsOptional()
+    @IsString()
+    ipa?: string;
+}
+
+class LessonFlowSongDto {
+    @IsOptional()
+    @IsString()
+    description?: string;
+
+    @IsString()
+    lyrics: string;
+
+    @IsOptional()
+    @IsString()
+    translation?: string;
+
+    @IsOptional()
+    @IsString()
+    audio?: string;
+
+    @IsOptional()
+    @IsString()
+    video?: string;
 
     @IsOptional()
     @IsArray()
     @ValidateNested({ each: true })
-    @Type(() => ExerciseItemDto)
-    exercises?: ExerciseItemDto[];
+    @Type(() => SongVocabularyWordDto)
+    vocabulary?: SongVocabularyWordDto[];
+
+    @IsArray()
+    @ValidateNested({ each: true })
+    @Type(() => QuestionAnswerDto)
+    questionsAndAnswers: QuestionAnswerDto[];
+
+    @IsOptional()
+    @IsArray()
+    @IsString({ each: true })
+    tags?: string[];
+}
+
+class LessonFlowContentDto {
+    @IsOptional()
+    @ValidateNested()
+    @Type(() => LessonFlowVocabularyDto)
+    vocabulary?: LessonFlowVocabularyDto;
+
+    @IsOptional()
+    @ValidateNested()
+    @Type(() => LessonFlowGrammarDto)
+    grammar?: LessonFlowGrammarDto;
+
+    @IsOptional()
+    @ValidateNested()
+    @Type(() => LessonFlowDialogueDto)
+    dialogue?: LessonFlowDialogueDto;
+
+    @IsOptional()
+    @ValidateNested()
+    @Type(() => LessonFlowReadingDto)
+    reading?: LessonFlowReadingDto;
+
+    @IsOptional()
+    @IsArray()
+    @ValidateNested({ each: true })
+    @Type(() => LessonFlowExerciseDto)
+    exercises?: LessonFlowExerciseDto[];
+
+    @IsOptional()
+    @IsArray()
+    @ValidateNested({ each: true })
+    @Type(() => LessonFlowQuizDto)
+    quizzes?: LessonFlowQuizDto[];
+
+    @IsOptional()
+    @IsArray()
+    @ValidateNested({ each: true })
+    @Type(() => LessonFlowReviewDto)
+    reviews?: LessonFlowReviewDto[];
+
+    @IsOptional()
+    @IsArray()
+    @ValidateNested({ each: true })
+    @Type(() => LessonFlowSummaryDto)
+    summaries?: LessonFlowSummaryDto[];
+
+    @IsOptional()
+    @IsArray()
+    @ValidateNested({ each: true })
+    @Type(() => LessonFlowGameDto)
+    games?: LessonFlowGameDto[];
+
+    @IsOptional()
+    @IsArray()
+    @ValidateNested({ each: true })
+    @Type(() => LessonFlowSongDto)
+    songs?: LessonFlowSongDto[];
+}
+
+class LessonFlowItemDto {
+    @IsString()
+    title: string;
+
+    @IsOptional()
+    @IsString()
+    description?: string;
+
+    @IsOptional()
+    @IsNumber()
+    @Min(0)
+    duration?: number;
+
+    @IsNumber()
+    @Min(0)
+    step: number;
+
+    @IsEnum(LessonActivityType)
+    type: LessonActivityType;
+
+    @IsOptional()
+    @IsEnum(LessonSkill)
+    skillFocus?: LessonSkill;
+
+    @IsOptional()
+    @ValidateNested()
+    @Type(() => LessonFlowContentDto)
+    content?: LessonFlowContentDto;
 }
 
 export class CreateLessonDto {
@@ -124,6 +373,7 @@ export class CreateLessonDto {
 
     @IsOptional()
     @IsNumber()
+    @Min(0)
     orderIndex?: number;
 
     @IsMongoId()
@@ -137,9 +387,11 @@ export class CreateLessonDto {
     @IsEnum(LessonSkill)
     skillFocus?: LessonSkill;
 
-    @ValidateNested()
-    @Type(() => ContentDto)
-    content: ContentDto;
+    @IsOptional()
+    @IsArray()
+    @ValidateNested({ each: true })
+    @Type(() => LessonFlowItemDto)
+    lessonFlow?: LessonFlowItemDto[];
 
     @IsOptional()
     @IsBoolean()
@@ -147,6 +399,8 @@ export class CreateLessonDto {
 
     @IsOptional()
     @IsNumber()
+    @Min(0)
+    @Max(1000)
     estimatedDuration?: number;
 
     @IsOptional()
@@ -171,8 +425,9 @@ export class CreateLessonDto {
     @IsString({ each: true })
     tags?: string[];
 
+    @IsOptional()
     @IsEnum(LessonStatus)
-    isActive: LessonStatus;
+    isActive?: LessonStatus;
 
     @IsMongoId()
     createdBy: string;
